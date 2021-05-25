@@ -7,9 +7,9 @@ using HappyTravel.Gifu.Data;
 
 namespace HappyTravel.Gifu.Api.Services
 {
-    public class VccIssueService : IVccIssueService
+    public class VccService : IVccService
     {
-        public VccIssueService(IHttpClientFactory clientFactory, GifuContext context)
+        public VccService(IHttpClientFactory clientFactory, GifuContext context)
         {
             _clientFactory = clientFactory;
             _context = context;

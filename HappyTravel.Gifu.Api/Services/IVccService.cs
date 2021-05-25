@@ -5,7 +5,7 @@ using HappyTravel.Gifu.Api.Models;
 
 namespace HappyTravel.Gifu.Api.Services
 {
-    public interface IVccIssueService
+    public interface IVccService
     {
         Task<Result<VccInfo>> Issue(VccIssueRequest request, CancellationToken cancellationToken);
     }

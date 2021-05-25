@@ -12,9 +12,9 @@ namespace HappyTravel.Gifu.Api.Controllers
     [Route("api/{v:apiVersion}/issue")]
     public class IssuesController : ControllerBase
     {
-        public IssuesController(IVccIssueService issueService)
+        public IssuesController(IVccService vccService)
         {
-            _issueService = issueService;
+            _vccService = vccService;
         }
         
         
@@ -29,13 +29,13 @@ namespace HappyTravel.Gifu.Api.Controllers
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Issue(VccIssueRequest request, CancellationToken cancellationToken)
         {
-            var info = await _issueService.Issue(request, cancellationToken);
+            var info = await _vccService.Issue(request, cancellationToken);
             return info.IsSuccess
                 ? Ok(info)
                 : BadRequest(new ProblemDetails{ Detail = info.Error });
         }
 
 
-        private readonly IVccIssueService _issueService;
+        private readonly IVccService _vccService;
     }
 }

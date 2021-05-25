@@ -65,7 +65,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
             var issuerOptions = vaultClient.Get(configuration["IssuerOptions"])
                 .GetAwaiter().GetResult();
 
-            services.AddHttpClient(VccIssueService.HttpClientName);
+            services.AddHttpClient(VccService.HttpClientName);
 
             return services
                 .Configure<IssuerOptions>(o =>
@@ -74,7 +74,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
                     o.ClientId = issuerOptions["clientId"];
                     o.ClientSecret = issuerOptions["clientSecret"];
                 })
-                .AddTransient<IVccIssueService, VccIssueService>();
+                .AddTransient<IVccService, VccService>();
         }
         
         
