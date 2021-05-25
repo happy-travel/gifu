@@ -7,9 +7,9 @@ namespace HappyTravel.Gifu.Data
     {
         public GifuContext(DbContextOptions<GifuContext> options) : base(options)
         { }
-        
-        
-        public DbSet<Issue> Issues { get; set; }
+
+
+        public DbSet<Issue> Issues => Set<Issue>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
