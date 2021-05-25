@@ -1,0 +1,41 @@
+﻿using System.Threading;
+using System.Threading.Tasks;
+using HappyTravel.Gifu.Api.Models;
+using HappyTravel.Gifu.Api.Services;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace HappyTravel.Gifu.Api.Controllers
+{
+    [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/{v:apiVersion}/issue")]
+    public class IssuesController : ControllerBase
+    {
+        public IssuesController(IVccIssueService issueService)
+        {
+            _issueService = issueService;
+        }
+        
+        
+        /// <summary>
+        /// Issues new virtual credit card
+        /// </summary>
+        /// <param name="request">Vcc request</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Virtual credit card info</returns>
+        [HttpPost]
+        [ProducesResponseType(typeof(VccInfo), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Issue(VccIssueRequest request, CancellationToken cancellationToken)
+        {
+            var info = await _issueService.Issue(request, cancellationToken);
+            return info.IsSuccess
+                ? Ok(info)
+                : BadRequest(new ProblemDetails{ Detail = info.Error });
+        }
+
+
+        private readonly IVccIssueService _issueService;
+    }
+}

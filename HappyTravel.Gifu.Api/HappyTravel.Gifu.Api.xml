@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>HappyTravel.Gifu.Api</name>
+    </assembly>
+    <members>
+        <member name="M:HappyTravel.Gifu.Api.Controllers.IssuesController.Issue(HappyTravel.Gifu.Api.Models.VccIssueRequest,System.Threading.CancellationToken)">
+            <summary>
+            Issues new virtual credit card
+            </summary>
+            <param name="request">Vcc request</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Virtual credit card info</returns>
+        </member>
+    </members>
+</doc>
