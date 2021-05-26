@@ -67,8 +67,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 
             services.AddHttpClient<IApiClient, AmExClient>();
 
-            return services
-                .Configure<AmExOptions>(o =>
+            return services.Configure<AmExOptions>(o =>
                 {
                     o.Endpoint = amExOptions["endpoint"];
                     o.ClientId = amExOptions["clientId"];
