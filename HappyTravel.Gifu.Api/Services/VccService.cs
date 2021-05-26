@@ -50,9 +50,9 @@ namespace HappyTravel.Gifu.Api.Services
             Result<VccInfo> WriteLog(Result<VccInfo> result)
             {
                 if (result.IsFailure)
-                    _logger.LogError("Creating VCC completed with error `{Error}`", result.Error);
+                    _logger.LogError("Creating VCC for reference code `{ReferenceCode}` completed with error `{Error}`", request.ReferenceCode, result.Error);
                 else
-                    _logger.LogInformation("Creating Vcc for reference code {ReferenceCode} completed", request.ReferenceCode);
+                    _logger.LogInformation("Creating Vcc for reference code `{ReferenceCode}` completed", request.ReferenceCode);
 
                 return result;
             }
