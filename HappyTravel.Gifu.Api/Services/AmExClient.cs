@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -10,8 +9,10 @@ using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
+using HappyTravel.Gifu.Api.Models.AmEx.Response;
 using HappyTravel.Money.Models;
 using Microsoft.Extensions.Options;
+using TokenDetails = HappyTravel.Gifu.Api.Models.AmEx.Request.TokenDetails;
 
 namespace HappyTravel.Gifu.Api.Services
 {
@@ -27,7 +28,7 @@ namespace HappyTravel.Gifu.Api.Services
         public async Task<Result<VccInfo>> CreateCard(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
-            var payload = new CreateToken
+            var payload = new CreateTokenRequest
             {
                 TokenIssuanceParams = new TokenIssuanceParams
                 {
@@ -50,7 +51,7 @@ namespace HappyTravel.Gifu.Api.Services
             await SignMessage(request);
 
             var response = await _httpClient.SendAsync(request);
-            var content = await JsonSerializer.DeserializeAsync<Models.AmEx.Response.CreateToken>(await response.Content.ReadAsStreamAsync());
+            var content = await JsonSerializer.DeserializeAsync<CreateTokenResponse>(await response.Content.ReadAsStreamAsync());
 
             return content.Status.ShortMessage != "success"
                 ? Result.Failure<VccInfo>(content.Status.DetailedMessage)
