@@ -6,7 +6,7 @@ using HappyTravel.Money.Models;
 
 namespace HappyTravel.Gifu.Api.Services
 {
-    public interface IApiClient
+    public interface IAmExClient
     {
         Task<Result<VccInfo>> CreateCard(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate);
     }

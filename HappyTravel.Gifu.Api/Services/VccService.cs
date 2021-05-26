@@ -12,7 +12,7 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public class VccService : IVccService
     {
-        public VccService(IApiClient client, ILogger<VccService> logger)
+        public VccService(IAmExClient client, ILogger<VccService> logger)
         {
             _client = client;
             _logger = logger;
@@ -59,7 +59,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
 
-        private readonly IApiClient _client;
+        private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
     }
 }

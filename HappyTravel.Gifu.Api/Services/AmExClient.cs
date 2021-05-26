@@ -16,7 +16,7 @@ using TokenDetails = HappyTravel.Gifu.Api.Models.AmEx.Request.TokenDetails;
 
 namespace HappyTravel.Gifu.Api.Services
 {
-    public class AmExClient : IApiClient
+    public class AmExClient : IAmExClient
     {
         public AmExClient(HttpClient httpClient, IOptions<AmExOptions> options)
         {

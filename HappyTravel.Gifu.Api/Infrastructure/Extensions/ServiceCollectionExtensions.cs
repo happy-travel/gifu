@@ -65,7 +65,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
             var amExOptions = vaultClient.Get(configuration["AmExOptions"])
                 .GetAwaiter().GetResult();
 
-            services.AddHttpClient<IApiClient, AmExClient>();
+            services.AddHttpClient<IAmExClient, AmExClient>();
 
             return services.Configure<AmExOptions>(o =>
                 {
