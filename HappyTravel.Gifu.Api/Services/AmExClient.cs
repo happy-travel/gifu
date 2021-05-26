@@ -62,12 +62,12 @@ namespace HappyTravel.Gifu.Api.Services
         private async Task SignMessage(HttpRequestMessage request)
         {
             var authProvider = new HmacAuthProvider();
-            var headers = authProvider.GenerateAuthHeaders(clientKey:_options.ClientId, 
-                clientSecret:_options.ClientSecret, 
-                payload:request.Content is not null
+            var headers = authProvider.GenerateAuthHeaders(clientKey: _options.ClientId, 
+                clientSecret: _options.ClientSecret, 
+                payload: request.Content is not null
                     ? await request.Content.ReadAsStringAsync()
                     : null, 
-                requestUrl:request.RequestUri?.ToString());
+                requestUrl: request.RequestUri?.ToString());
 
             foreach (var (key, value) in headers)
             {
