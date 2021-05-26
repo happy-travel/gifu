@@ -1,9 +1,8 @@
-﻿using System;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace HappyTravel.Gifu.Api.Models.AmEx.Request
 {
-    public struct TokenDetails
+    public readonly struct TokenDetails
     {
         [JsonPropertyName("token_reference_id")]
         public string TokenReferenceId { get; init; }

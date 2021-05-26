@@ -2,7 +2,7 @@
 
 namespace HappyTravel.Gifu.Api.Models.AmEx.Request
 {
-    public struct TokenIssuanceParams
+    public readonly struct TokenIssuanceParams
     {
         [JsonPropertyName("token_details")]
         public TokenDetails TokenDetails { get; init; }
