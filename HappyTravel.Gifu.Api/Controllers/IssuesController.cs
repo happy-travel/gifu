@@ -9,7 +9,7 @@ namespace HappyTravel.Gifu.Api.Controllers
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/{v:apiVersion}/issue")]
+    [Route("api/{v:apiVersion}/issues")]
     public class IssuesController : ControllerBase
     {
         public IssuesController(IVccService vccService)
@@ -31,7 +31,7 @@ namespace HappyTravel.Gifu.Api.Controllers
         {
             var info = await _vccService.Issue(request, cancellationToken);
             return info.IsSuccess
-                ? Ok(info)
+                ? Ok(info.Value)
                 : BadRequest(new ProblemDetails{ Detail = info.Error });
         }
 
