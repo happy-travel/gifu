@@ -19,7 +19,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public Task<Result<VccInfo>> Issue(VccIssueRequest request, CancellationToken cancellationToken)
+        public Task<Result<Vcc>> Issue(VccIssueRequest request, CancellationToken cancellationToken)
         {
             return ValidateRequest(request)
                 .Bind(CreateCard)
@@ -43,11 +43,11 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            Task<Result<VccInfo>> CreateCard()
+            Task<Result<Vcc>> CreateCard()
                 => _client.CreateCard(request.ReferenceCode, request.MoneyAmount, request.DueDate);
 
             
-            Result<VccInfo> WriteLog(Result<VccInfo> result)
+            Result<Vcc> WriteLog(Result<Vcc> result)
             {
                 if (result.IsFailure)
                     _logger.LogError("Creating VCC for reference code `{ReferenceCode}` completed with error `{Error}`", request.ReferenceCode, result.Error);

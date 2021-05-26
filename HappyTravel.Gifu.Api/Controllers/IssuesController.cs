@@ -25,7 +25,7 @@ namespace HappyTravel.Gifu.Api.Controllers
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>Virtual credit card info</returns>
         [HttpPost]
-        [ProducesResponseType(typeof(VccInfo), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Vcc), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Issue(VccIssueRequest request, CancellationToken cancellationToken)
         {

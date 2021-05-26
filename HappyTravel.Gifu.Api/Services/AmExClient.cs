@@ -25,7 +25,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public async Task<Result<VccInfo>> CreateCard(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate)
+        public async Task<Result<Vcc>> CreateCard(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
             var payload = new CreateTokenRequest
@@ -54,7 +54,7 @@ namespace HappyTravel.Gifu.Api.Services
             var content = await JsonSerializer.DeserializeAsync<CreateTokenResponse>(await response.Content.ReadAsStreamAsync());
 
             return content.Status.ShortMessage != "success"
-                ? Result.Failure<VccInfo>(content.Status.DetailedMessage)
+                ? Result.Failure<Vcc>(content.Status.DetailedMessage)
                 : content.TokenIssuanceData.TokenDetails.ToVccInfo();
         }
 

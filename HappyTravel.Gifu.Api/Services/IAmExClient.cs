@@ -8,6 +8,6 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public interface IAmExClient
     {
-        Task<Result<VccInfo>> CreateCard(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate);
+        Task<Result<Vcc>> CreateCard(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate);
     }
 }

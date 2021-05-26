@@ -7,7 +7,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 {
     public static class TokenDetailsExtensions
     {
-        public static VccInfo ToVccInfo(this TokenDetails tokenDetails)
+        public static Vcc ToVccInfo(this TokenDetails tokenDetails)
         {
             return new ()
             {
