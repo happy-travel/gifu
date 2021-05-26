@@ -32,7 +32,7 @@ namespace HappyTravel.Gifu.Api.Controllers
             var info = await _vccService.Issue(request, cancellationToken);
             return info.IsSuccess
                 ? Ok(info.Value)
-                : BadRequest(new ProblemDetails{ Detail = info.Error });
+                : BadRequest(new ProblemDetails { Detail = info.Error });
         }
 
 
