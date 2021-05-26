@@ -4,7 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using FluentValidation;
+using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Models;
+using HappyTravel.Gifu.Data;
+using HappyTravel.Gifu.Data.Models;
 using HappyTravel.Money.Enums;
 using Microsoft.Extensions.Logging;
 
@@ -12,10 +15,11 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public class VccService : IVccService
     {
-        public VccService(IAmExClient client, ILogger<VccService> logger)
+        public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context)
         {
             _client = client;
             _logger = logger;
+            _context = context;
         }
         
         
@@ -43,23 +47,42 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            Task<Result<Vcc>> CreateCard()
-                => _client.CreateCard(request.ReferenceCode, request.MoneyAmount, request.DueDate);
+            async Task<Result<(string, Vcc)>> CreateCard()
+            {
+                var (transactionId, response) = await _client.CreateToken(request.ReferenceCode, request.MoneyAmount, request.DueDate);
+                return response.Status.ShortMessage != "success" 
+                    ? Result.Failure<(string, Vcc)>(response.Status.DetailedMessage) 
+                    : (transactionId, response.TokenIssuanceData.TokenDetails.ToVcc());
+            }
 
             
-            Result<Vcc> WriteLog(Result<Vcc> result)
+            async Task<Result<Vcc>> WriteLog(Result<(string TransactionId, Vcc Vcc)> result)
             {
                 if (result.IsFailure)
+                {
                     _logger.LogError("Creating VCC for reference code `{ReferenceCode}` completed with error `{Error}`", request.ReferenceCode, result.Error);
-                else
-                    _logger.LogInformation("Creating Vcc for reference code `{ReferenceCode}` completed", request.ReferenceCode);
-
-                return result;
+                    return Result.Failure<Vcc>($"Error creating VCC for reference code `{request.ReferenceCode}`");
+                }
+                
+                _context.Issues.Add(new Issue
+                {
+                    TransactionId = result.Value.TransactionId,
+                    ReferenceCode = request.ReferenceCode,
+                    Amount = request.MoneyAmount.Amount,
+                    Currency = request.MoneyAmount.Currency,
+                    DueDate = request.DueDate
+                });
+                
+                await _context.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Creating Vcc for reference code `{ReferenceCode}` completed", request.ReferenceCode);
+                
+                return result.Value.Vcc;
             }
         }
         
 
         private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
+        private readonly GifuContext _context;
     }
 }
