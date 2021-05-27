@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using HappyTravel.Money.Extensions;
 using HappyTravel.Money.Models;
 
 namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
@@ -8,9 +9,8 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
     {
         public static string ToAmExFormat(this MoneyAmount moneyAmount)
         {
-            var (amount, _) = moneyAmount;
-            int count = BitConverter.GetBytes(decimal.GetBits(amount)[3])[2];
-            return ((int)(amount * (int)Math.Pow(10, count))).ToString(CultureInfo.InvariantCulture);
+            return Math.Ceiling(moneyAmount.Amount * (int)Math.Pow(10, moneyAmount.Currency.GetDecimalDigitsCount()))
+                .ToString(CultureInfo.InvariantCulture);
         }
     }
 }
