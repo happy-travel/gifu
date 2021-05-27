@@ -23,7 +23,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public Task<Result<Vcc>> Issue(VccIssueRequest request, CancellationToken cancellationToken)
+        public Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, CancellationToken cancellationToken)
         {
             return ValidateRequest(request)
                 .Bind(CreateCard)
@@ -47,21 +47,21 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            async Task<Result<(string, Vcc)>> CreateCard()
+            async Task<Result<(string, VirtualCreditCard)>> CreateCard()
             {
                 var (transactionId, response) = await _client.CreateToken(request.ReferenceCode, request.MoneyAmount, request.DueDate);
                 return response.Status.ShortMessage != "success" 
-                    ? Result.Failure<(string, Vcc)>(response.Status.DetailedMessage) 
-                    : (transactionId, response.TokenIssuanceData.TokenDetails.ToVcc());
+                    ? Result.Failure<(string, VirtualCreditCard)>(response.Status.DetailedMessage) 
+                    : (transactionId, response.TokenIssuanceData.TokenDetails.ToVirtualCreditCard());
             }
 
             
-            async Task<Result<Vcc>> WriteLog(Result<(string TransactionId, Vcc Vcc)> result)
+            async Task<Result<VirtualCreditCard>> WriteLog(Result<(string TransactionId, VirtualCreditCard Vcc)> result)
             {
                 if (result.IsFailure)
                 {
                     _logger.LogError("Creating VCC for reference code `{ReferenceCode}` completed with error `{Error}`", request.ReferenceCode, result.Error);
-                    return Result.Failure<Vcc>($"Error creating VCC for reference code `{request.ReferenceCode}`");
+                    return Result.Failure<VirtualCreditCard>($"Error creating VCC for reference code `{request.ReferenceCode}`");
                 }
                 
                 _context.Issues.Add(new Issue

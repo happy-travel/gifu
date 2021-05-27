@@ -7,6 +7,6 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public interface IVccService
     {
-        Task<Result<Vcc>> Issue(VccIssueRequest request, CancellationToken cancellationToken);
+        Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, CancellationToken cancellationToken);
     }
 }
