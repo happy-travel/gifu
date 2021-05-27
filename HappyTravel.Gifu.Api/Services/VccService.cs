@@ -64,7 +64,7 @@ namespace HappyTravel.Gifu.Api.Services
                     return Result.Failure<VirtualCreditCard>($"Error creating VCC for reference code `{request.ReferenceCode}`");
                 }
                 
-                _context.Issues.Add(new Issue
+                _context.VccIssues.Add(new VccIssue
                 {
                     TransactionId = result.Value.TransactionId,
                     ReferenceCode = request.ReferenceCode,
