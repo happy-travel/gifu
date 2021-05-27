@@ -60,7 +60,7 @@ namespace HappyTravel.Gifu.Api.Services
             {
                 if (result.IsFailure)
                 {
-                    _logger.LogError("Creating VCC for reference code `{ReferenceCode}` completed with error `{Error}`", request.ReferenceCode, result.Error);
+                    _logger.LogError("Creating a VCC for the reference code `{ReferenceCode}` completed with the error: `{Error}`", request.ReferenceCode, result.Error);
                     return Result.Failure<VirtualCreditCard>($"Error creating VCC for reference code `{request.ReferenceCode}`");
                 }
                 
@@ -74,7 +74,7 @@ namespace HappyTravel.Gifu.Api.Services
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation("Creating Vcc for reference code `{ReferenceCode}` completed", request.ReferenceCode);
+                _logger.LogInformation("Creating a VCC for the reference code `{ReferenceCode}` completed", request.ReferenceCode);
                 
                 return result.Value.Vcc;
             }
