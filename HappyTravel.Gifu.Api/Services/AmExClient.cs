@@ -24,23 +24,9 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public async Task<(string TransactionId, CreateTokenResponse Response)> CreateToken(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate)
+        public async Task<(string TransactionId, CreateTokenResponse Response)> CreateToken(CreateTokenRequest payload)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
-            var payload = new CreateTokenRequest
-            {
-                TokenIssuanceParams = new TokenIssuanceParams
-                {
-                    TokenDetails = new TokenDetails
-                    {
-                        TokenReferenceId = referenceCode,
-                        TokenAmount = moneyAmount.ToAmExFormat(),
-                        TokenStartDate = DateTime.UtcNow.Date.ToAmExFormat(),
-                        TokenEndDate = dueDate.ToAmExFormat()
-                    }
-                }
-            };
-            
             var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")

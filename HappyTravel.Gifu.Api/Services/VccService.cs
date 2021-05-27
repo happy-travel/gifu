@@ -7,6 +7,7 @@ using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx;
+using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
 using HappyTravel.Money.Enums;
@@ -55,7 +56,22 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result<(string, VirtualCreditCard)>> CreateCard()
             {
-                var (transactionId, response) = await _client.CreateToken(request.ReferenceCode, request.MoneyAmount, request.DueDate);
+                var payload = new CreateTokenRequest
+                {
+                    TokenIssuanceParams = new TokenIssuanceParams
+                    {
+                        TokenDetails = new TokenDetails
+                        {
+                            TokenReferenceId = request.ReferenceCode,
+                            TokenAmount = request.MoneyAmount.ToAmExFormat(),
+                            TokenStartDate = DateTime.UtcNow.Date.ToAmExFormat(),
+                            TokenEndDate = request.DueDate.ToAmExFormat()
+                        }
+                    }
+                };
+                
+                var (transactionId, response) = await _client.CreateToken(payload);
+                
                 return response.Status.ShortMessage != "success" 
                     ? Result.Failure<(string, VirtualCreditCard)>(response.Status.DetailedMessage) 
                     : (transactionId, response.TokenIssuanceData.TokenDetails.ToVirtualCreditCard());
