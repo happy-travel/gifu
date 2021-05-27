@@ -1,17 +1,13 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Amex.Api.Client.Core.Security.Authentication;
-using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
-using HappyTravel.Money.Models;
 using Microsoft.Extensions.Options;
-using TokenDetails = HappyTravel.Gifu.Api.Models.AmEx.Request.TokenDetails;
 
 namespace HappyTravel.Gifu.Api.Services
 {
