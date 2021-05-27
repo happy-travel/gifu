@@ -6,6 +6,7 @@ using CSharpFunctionalExtensions;
 using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Models;
+using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
 using HappyTravel.Money.Enums;
@@ -35,7 +36,7 @@ namespace HappyTravel.Gifu.Api.Services
                 var validator = new InlineValidator<VccIssueRequest>();
 
                 validator.RuleFor(r => r.DueDate.Date).GreaterThan(DateTime.UtcNow.Date);
-                validator.RuleFor(r => r.MoneyAmount.Currency).Equal(Currencies.USD);
+                validator.RuleFor(r => r.MoneyAmount.Currency).Must(IsSupported).WithMessage("Currency is not supported");
                 validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
                 validator.RuleFor(r => r.ReferenceCode).NotEmpty();
 
@@ -44,6 +45,11 @@ namespace HappyTravel.Gifu.Api.Services
                 return result.IsValid
                     ? Result.Success()
                     : Result.Failure(string.Join(";", result.Errors.Select(e => e.ErrorMessage)));
+
+
+                static bool IsSupported(Currencies currency) 
+                    => Enum.GetNames(typeof(AmexCurrencies))
+                        .Any(x => x.Equals(currency.ToString(), StringComparison.OrdinalIgnoreCase));
             }
 
 
