@@ -9,10 +9,10 @@ namespace HappyTravel.Gifu.Api.Controllers
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/{v:apiVersion}/issues")]
-    public class IssuesController : ControllerBase
+    [Route("api/{v:apiVersion}/cards")]
+    public class CardsController : ControllerBase
     {
-        public IssuesController(IVccService vccService)
+        public CardsController(IVccService vccService)
         {
             _vccService = vccService;
         }
