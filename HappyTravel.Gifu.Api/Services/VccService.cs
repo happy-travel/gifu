@@ -60,7 +60,7 @@ namespace HappyTravel.Gifu.Api.Services
                 {
                     TokenIssuanceParams = new TokenIssuanceParams
                     {
-                        BillingAccountId = string.Empty, // TODO: set account id for currency in request
+                        BillingAccountId = string.Empty, // TODO: set account id based on currency in request
                         TokenDetails = new TokenDetails
                         {
                             TokenReferenceId = request.ReferenceCode,
