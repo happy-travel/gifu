@@ -5,10 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Amex.Api.Client.Core.Security.Authentication;
-using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
-using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
 using HappyTravel.Money.Models;
@@ -26,7 +24,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public async Task<(string, CreateTokenResponse)> CreateToken(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate)
+        public async Task<(string TransactionId, CreateTokenResponse Response)> CreateToken(string referenceCode, MoneyAmount moneyAmount, DateTime dueDate)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
             var payload = new CreateTokenRequest
