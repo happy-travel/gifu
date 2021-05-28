@@ -1,0 +1,12 @@
+{
+  "Database": {
+    "ConnectionString": "Server={0};Port={1};Database=gifu;Userid={2};Password={3};",
+    "Options": "gifu/connection-string"
+  },
+  "Vault": {
+    "Endpoint": "HTDC_VAULT_ENDPOINT",
+    "Engine": "secrets",
+    "Role": "gifu",
+    "Token": "HTDC_VAULT_TOKEN"
+  }
+}
