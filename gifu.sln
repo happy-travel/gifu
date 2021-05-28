@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTravel.Gifu.Api", "Hap
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTravel.Gifu.Data", "HappyTravel.Gifu.Data\HappyTravel.Gifu.Data.csproj", "{2C32AD63-34E3-4063-9463-4F57C75D327D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTravel.Gifu.UnitTests", "HappyTravel.Gifu.UnitTests\HappyTravel.Gifu.UnitTests.csproj", "{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,17 @@ Global
 		{2C32AD63-34E3-4063-9463-4F57C75D327D}.Release|x64.Build.0 = Release|Any CPU
 		{2C32AD63-34E3-4063-9463-4F57C75D327D}.Release|x86.ActiveCfg = Release|Any CPU
 		{2C32AD63-34E3-4063-9463-4F57C75D327D}.Release|x86.Build.0 = Release|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Debug|x64.Build.0 = Debug|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Debug|x86.Build.0 = Debug|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Release|x64.ActiveCfg = Release|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Release|x64.Build.0 = Release|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Release|x86.ActiveCfg = Release|Any CPU
+		{2779AAA7-F06B-422B-9584-5AE67BE6B7B3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
