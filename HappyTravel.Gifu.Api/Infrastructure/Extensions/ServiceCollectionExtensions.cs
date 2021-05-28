@@ -62,17 +62,16 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 
         public static IServiceCollection ConfigureIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
         {
-            var issuerOptions = vaultClient.Get(configuration["IssuerOptions"])
+            var amExOptions = vaultClient.Get(configuration["AmExOptions"])
                 .GetAwaiter().GetResult();
 
-            services.AddHttpClient(VccService.HttpClientName);
+            services.AddHttpClient<IAmExClient, AmExClient>();
 
-            return services
-                .Configure<IssuerOptions>(o =>
+            return services.Configure<AmExOptions>(o =>
                 {
-                    o.Endpoint = issuerOptions["endpoint"];
-                    o.ClientId = issuerOptions["clientId"];
-                    o.ClientSecret = issuerOptions["clientSecret"];
+                    o.Endpoint = amExOptions["endpoint"];
+                    o.ClientId = amExOptions["clientId"];
+                    o.ClientSecret = amExOptions["clientSecret"];
                 })
                 .AddTransient<IVccService, VccService>();
         }

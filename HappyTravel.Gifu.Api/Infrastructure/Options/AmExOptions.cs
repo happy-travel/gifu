@@ -1,6 +1,6 @@
 ﻿namespace HappyTravel.Gifu.Api.Infrastructure.Options
 {
-    public class IssuerOptions
+    public class AmExOptions
     {
         public string Endpoint { get; set; } = string.Empty;
         public string ClientId { get; set; } = string.Empty;

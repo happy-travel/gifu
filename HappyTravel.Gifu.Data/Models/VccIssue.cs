@@ -3,7 +3,7 @@ using HappyTravel.Money.Enums;
 
 namespace HappyTravel.Gifu.Data.Models
 {
-    public class Issue
+    public class VccIssue
     {
         public string TransactionId { get; set; } = string.Empty;
         public string ReferenceCode { get; set; } = string.Empty;

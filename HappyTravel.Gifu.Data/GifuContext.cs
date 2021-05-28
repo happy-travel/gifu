@@ -9,12 +9,12 @@ namespace HappyTravel.Gifu.Data
         { }
 
 
-        public DbSet<Issue> Issues => Set<Issue>();
+        public DbSet<VccIssue> VccIssues => Set<VccIssue>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Issue>(b =>
+            modelBuilder.Entity<VccIssue>(b =>
             {
                 b.HasKey(i => i.TransactionId);
             });
