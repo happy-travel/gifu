@@ -1,0 +1,76 @@
+replicaCount: 1
+
+jaeger:
+  sidecar: jaeger-dev
+  collector_host: dns:///jaeger-dev-collector-headless.observability:14250
+
+image:
+  repository: registry.happytravel.com/gifu
+  tag: latest
+  pullPolicy: Always
+imagePullSecrets:
+  - name: travel-registry
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/ingress.allow-http: "false"
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: gf-dev.happytravel.com
+      paths:
+        - /
+  tls:
+   - secretName: happytravel-tls
+     hosts:
+       - gf-dev.happytravel.com
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 500Mi
+  requests:
+    cpu: 200m
+    memory: 500Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+env:
+  ASPNETCORE_URLS: http://*:80
+  ASPNETCORE_ENVIRONMENT: "Development"
+  HTDC_VAULT_ENDPOINT: "https://vault.dev.happytravel.com/v1/"
+  HTDC_GIFU_SENTRY_ENDPOINT: "https://9159b1440e3f4215aa9de0cba5849cfd:f2fbb9108841429a9cdd7058c1372cd0@sentry.happytravel.com/43"
+  JAEGER_AGENT_HOST: "localhost"
+  JAEGER_AGENT_PORT: "6831"
