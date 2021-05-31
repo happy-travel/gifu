@@ -5,23 +5,25 @@ using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
+using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
-using HappyTravel.Money.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace HappyTravel.Gifu.Api.Services
 {
     public class VccService : IVccService
     {
-        public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context)
+        public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context, IOptions<AmExOptions> options)
         {
             _client = client;
             _logger = logger;
             _context = context;
+            _options = options.Value;
         }
         
         
@@ -32,35 +34,35 @@ namespace HappyTravel.Gifu.Api.Services
                 .Finally(WriteLog);
 
 
-            static Result ValidateRequest(VccIssueRequest request)
+            static Result<AmexCurrencies> ValidateRequest(VccIssueRequest request)
             {
                 var validator = new InlineValidator<VccIssueRequest>();
 
                 validator.RuleFor(r => r.DueDate.Date).GreaterThan(DateTime.UtcNow.Date);
-                validator.RuleFor(r => r.MoneyAmount.Currency).Must(IsSupported).WithMessage("Currency is not supported");
                 validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
                 validator.RuleFor(r => r.ReferenceCode).NotEmpty();
 
                 var result = validator.Validate(request);
+                
+                if (!result.IsValid)
+                    return Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage)));
 
-                return result.IsValid
-                    ? Result.Success()
-                    : Result.Failure(string.Join(";", result.Errors.Select(e => e.ErrorMessage)));
-
-
-                static bool IsSupported(Currencies currency) 
-                    => Enum.GetNames(typeof(AmexCurrencies))
-                        .Any(x => x.Equals(currency.ToString(), StringComparison.OrdinalIgnoreCase));
+                return Enum.TryParse<AmexCurrencies>(request.MoneyAmount.Currency.ToString(), out var currency)
+                    ? currency
+                    : Result.Failure<AmexCurrencies>("Currency is not supported");
             }
 
 
-            async Task<Result<(string, VirtualCreditCard)>> CreateCard()
+            async Task<Result<(string, VirtualCreditCard)>> CreateCard(AmexCurrencies currency)
             {
+                if(!_options.Accounts.TryGetValue(currency, out var accountId))
+                    return Result.Failure<(string, VirtualCreditCard)>($"Cannot get accountId for currency `{currency}`");
+                
                 var payload = new CreateTokenRequest
                 {
                     TokenIssuanceParams = new TokenIssuanceParams
                     {
-                        BillingAccountId = string.Empty, // TODO: set account id based on currency in request
+                        BillingAccountId = accountId,
                         TokenDetails = new TokenDetails
                         {
                             TokenReferenceId = request.ReferenceCode,
@@ -107,5 +109,6 @@ namespace HappyTravel.Gifu.Api.Services
         private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
         private readonly GifuContext _context;
+        private readonly AmExOptions _options;
     }
 }
