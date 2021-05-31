@@ -73,11 +73,11 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 
             services.AddHttpClient<IAmExClient, AmExClient>();
 
-            var accounts = amExAccounts.Select(a
-                    => Enum.TryParse<AmexCurrencies>(a.Key, out var currency)
-                        ? new {Currency = currency, AccountId = a.Value}
-                        : new {Currency = default(AmexCurrencies), AccountId = string.Empty})
-                .Where(a => a.Currency != default)
+            var accounts = amExAccounts.Select(a => new
+                {
+                    Currency = Enum.Parse<AmexCurrencies>(a.Key),
+                    AccountId = a.Value
+                })
                 .ToDictionary(a => a.Currency, a => a.AccountId);
 
             return services.Configure<AmExOptions>(o =>
