@@ -9,6 +9,8 @@ using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Data;
 using HappyTravel.VaultClient;
+using IdentityServer4.AccessTokenValidation;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -112,6 +114,23 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
                 options.EnableSensitiveDataLogging(false);
                 options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             }, 16);
+        }
+        
+        
+        public static IServiceCollection ConfigureAuthentication(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
+        {
+            var authorityOptions = vaultClient.Get(configuration["AuthorityOptions"]).GetAwaiter().GetResult();
+            
+            services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
+                .AddIdentityServerAuthentication(options =>
+                {
+                    options.Authority = authorityOptions["authorityUrl"];
+                    options.ApiName = authorityOptions["apiName"];
+                    options.RequireHttpsMetadata = true;
+                    options.SupportedTokens = SupportedTokens.Jwt;
+                });
+
+            return services;
         }
     }
 }

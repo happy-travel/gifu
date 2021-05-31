@@ -27,7 +27,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, CancellationToken cancellationToken)
+        public Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
         {
             return ValidateRequest(request)
                 .Bind(CreateCard)
@@ -95,7 +95,8 @@ namespace HappyTravel.Gifu.Api.Services
                     ReferenceCode = request.ReferenceCode,
                     Amount = request.MoneyAmount.Amount,
                     Currency = request.MoneyAmount.Currency,
-                    DueDate = request.DueDate
+                    DueDate = request.DueDate,
+                    ClientId = clientId
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
