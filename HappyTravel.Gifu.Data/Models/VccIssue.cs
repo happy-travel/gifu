@@ -10,5 +10,6 @@ namespace HappyTravel.Gifu.Data.Models
         public decimal Amount { get; set; }
         public Currencies Currency { get; set; }
         public DateTime DueDate { get; set; }
+        public string ClientId { get; set; } = string.Empty;
     }
 }

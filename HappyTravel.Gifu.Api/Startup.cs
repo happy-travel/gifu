@@ -1,6 +1,7 @@
 using System;
 using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
+using HappyTravel.Gifu.Api.Services;
 using HappyTravel.VaultClient;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -31,13 +32,17 @@ namespace HappyTravel.Gifu.Api
 
             services
                 .AddMvcCore()
+                .AddAuthorization()
                 .AddApiExplorer();
 
             services
+                .AddHttpContextAccessor()
                 .ConfigureApiVersioning()
                 .ConfigureSwagger()
                 .ConfigureDatabaseOptions(vaultClient, Configuration)
-                .ConfigureIssuer(vaultClient, Configuration);
+                .ConfigureAuthentication(vaultClient, Configuration)
+                .ConfigureIssuer(vaultClient, Configuration)
+                .AddTransient<IClientService, ClientService>();
         }
 
 
@@ -53,6 +58,8 @@ namespace HappyTravel.Gifu.Api
             app
                 .UseHttpsRedirection()
                 .UseRouting()
+                .UseAuthentication()
+                .UseAuthorization()
                 .UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
