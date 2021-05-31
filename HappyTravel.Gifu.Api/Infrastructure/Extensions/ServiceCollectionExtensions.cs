@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
+using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Data;
 using HappyTravel.VaultClient;
@@ -64,14 +67,25 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
         {
             var amExOptions = vaultClient.Get(configuration["AmExOptions"])
                 .GetAwaiter().GetResult();
+            
+            var amExAccounts = vaultClient.Get(configuration["AmexAccounts"])
+                .GetAwaiter().GetResult();
 
             services.AddHttpClient<IAmExClient, AmExClient>();
+
+            var accounts = amExAccounts.Select(a
+                    => Enum.TryParse<AmexCurrencies>(a.Key, out var currency)
+                        ? new {Currency = currency, AccountId = a.Value}
+                        : new {Currency = default(AmexCurrencies), AccountId = string.Empty})
+                .Where(a => a.Currency != default)
+                .ToDictionary(a => a.Currency, a => a.AccountId);
 
             return services.Configure<AmExOptions>(o =>
                 {
                     o.Endpoint = amExOptions["endpoint"];
                     o.ClientId = amExOptions["clientId"];
                     o.ClientSecret = amExOptions["clientSecret"];
+                    o.Accounts = accounts;
                 })
                 .AddTransient<IVccService, VccService>();
         }
