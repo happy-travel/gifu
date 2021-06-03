@@ -44,6 +44,7 @@ namespace HappyTravel.Gifu.Api
                 .AddDbContextCheck<GifuContext>();
 
             services
+                .AddProblemDetailsErrorHandling()
                 .AddHttpContextAccessor()
                 .ConfigureApiVersioning()
                 .ConfigureSwagger()
