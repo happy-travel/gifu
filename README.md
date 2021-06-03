@@ -30,9 +30,9 @@ POST /api/1.0/cards
 #### Response
 ```json
 {
-	"number": "0000000000000000",
-	"expiry": "0000-00-00T00:00:00:00",
+	"number": "1111222233334444",
+	"expiry": "2020-10-10T00:00:00:00",
 	"holder": "Cardholder Name",
-	"code": "000"
+	"code": "123"
 }
 ```
