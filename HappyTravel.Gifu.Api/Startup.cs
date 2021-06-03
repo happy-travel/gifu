@@ -1,13 +1,18 @@
 using System;
+using System.Collections.Generic;
+using HappyTravel.ErrorHandling.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Data;
+using HappyTravel.StdOutLogger.Extensions;
 using HappyTravel.VaultClient;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace HappyTravel.Gifu.Api
 {
@@ -35,7 +40,11 @@ namespace HappyTravel.Gifu.Api
                 .AddAuthorization()
                 .AddApiExplorer();
 
+            services.AddHealthChecks()
+                .AddDbContextCheck<GifuContext>();
+
             services
+                .AddProblemDetailsErrorHandling()
                 .AddHttpContextAccessor()
                 .ConfigureApiVersioning()
                 .ConfigureSwagger()
@@ -46,8 +55,12 @@ namespace HappyTravel.Gifu.Api
         }
 
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
+            var logger = loggerFactory.CreateLogger<Startup>();
+            app.UseProblemDetailsErrorHandler(env, logger);
+            app.UseHttpContextLogging(options => options.IgnoredPaths = new HashSet<string> {"/health"});
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -62,6 +75,7 @@ namespace HappyTravel.Gifu.Api
                 .UseAuthorization()
                 .UseEndpoints(endpoints =>
                 {
+                    endpoints.MapHealthChecks("/health");
                     endpoints.MapControllers();
                 });
         }

@@ -27,8 +27,8 @@ namespace HappyTravel.Gifu.Data
 
             return context;
         }
-        
-        
+
+
         private static string GetConnectionString(Dictionary<string, string> dbOptions)
         {
             return string.Format(ConnectionStringTemplate,
@@ -37,13 +37,13 @@ namespace HappyTravel.Gifu.Data
                 dbOptions["userId"],
                 dbOptions["password"]);
         }
-        
-        
+
+
         private static Dictionary<string, string> GetDbOptions(IConfiguration configuration)
         {
             var vaultUrl = Environment.GetEnvironmentVariable(configuration["Vault:Endpoint"])
                            ?? throw new ArgumentException("Could not obtain Vault endpoint environment variables");
-            
+
             using var vaultClient = new VaultClient.VaultClient(new VaultOptions
             {
                 BaseUrl = new Uri(vaultUrl, UriKind.Absolute),
@@ -55,6 +55,6 @@ namespace HappyTravel.Gifu.Data
         }
 
 
-        private const string ConnectionStringTemplate = "Server={0};Port={1};Database=travelgate;Userid={2};Password={3};";
+        private const string ConnectionStringTemplate = "Server={0};Port={1};Database=gifu;Userid={2};Password={3};";
     }
 }
