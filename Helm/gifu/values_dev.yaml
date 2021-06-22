@@ -74,3 +74,4 @@ env:
   HTDC_GIFU_SENTRY_ENDPOINT: "https://9159b1440e3f4215aa9de0cba5849cfd:f2fbb9108841429a9cdd7058c1372cd0@sentry.happytravel.com/43"
   JAEGER_AGENT_HOST: "localhost"
   JAEGER_AGENT_PORT: "6831"
+  CONSUL_HTTP_ADDR: "https://consul-dev.happytravel.com/"

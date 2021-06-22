@@ -1,3 +1,5 @@
+using System;
+using HappyTravel.ConsulKeyValueClient.ConfigurationProvider.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.StdOutLogger.Extensions;
 using HappyTravel.StdOutLogger.Infrastructure;
@@ -35,7 +37,11 @@ namespace HappyTravel.Gifu.Api
                     config
                         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                         .AddJsonFile($"appsettings.{environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-                        .AddEnvironmentVariables();
+                        .AddEnvironmentVariables()
+                        .AddConsulKeyValueClient(Environment.GetEnvironmentVariable("CONSUL_HTTP_ADDR") ?? throw new InvalidOperationException("Consul endpoint is not set"),
+                        "gifu",
+                        Environment.GetEnvironmentVariable("CONSUL_HTTP_TOKEN") ?? throw new InvalidOperationException("Consul http token is not set"));
+                    
                 })
                 .ConfigureLogging((hostingContext, logging) =>
                 {
@@ -50,7 +56,7 @@ namespace HappyTravel.Gifu.Api
                         logging.AddConsole();
                         logging.AddStdOutLogger(setup =>
                         {
-                            setup.IncludeScopes = false;
+                            setup.IncludeScopes = true;
                             setup.RequestIdHeader = Constants.DefaultRequestIdHeader;
                             setup.UseUtcTimestamp = true;
                         });

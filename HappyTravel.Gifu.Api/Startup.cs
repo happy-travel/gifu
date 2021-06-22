@@ -51,6 +51,7 @@ namespace HappyTravel.Gifu.Api
                 .ConfigureDatabaseOptions(vaultClient, Configuration)
                 .ConfigureAuthentication(vaultClient, Configuration)
                 .ConfigureIssuer(vaultClient, Configuration)
+                .AddTracing()
                 .AddTransient<IClientService, ClientService>();
         }
 

@@ -15,7 +15,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 {
@@ -129,6 +132,20 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
                     options.RequireHttpsMetadata = true;
                     options.SupportedTokens = SupportedTokens.Jwt;
                 });
+
+            return services;
+        }
+        
+        
+        public static IServiceCollection AddTracing(this IServiceCollection services)
+        {
+            services.AddOpenTelemetryTracing(builder =>
+            {
+                builder.AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault())
+                    .SetSampler(new AlwaysOnSampler());
+            });
 
             return services;
         }
