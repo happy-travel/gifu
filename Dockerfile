@@ -2,8 +2,11 @@ FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
 
 ARG VAULT_TOKEN
 ARG BUILD_VERSION
+ARG CONSUL_HTTP_TOKEN
+
 ENV HTDC_VAULT_TOKEN=$VAULT_TOKEN
 ENV BUILD_VERSION=$BUILD_VERSION
+ENV CONSUL_HTTP_TOKEN=$CONSUL_HTTP_TOKEN
 
 WORKDIR /app
 EXPOSE 80
@@ -14,7 +17,7 @@ WORKDIR /src
 COPY *.sln ./
 COPY . .
 
-RUN dotnet restore 
+RUN dotnet restore
 WORKDIR /src/HappyTravel.Gifu.Api
 RUN dotnet build -c Release -o /app
 

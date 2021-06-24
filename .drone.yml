@@ -57,6 +57,10 @@ steps:
       from_secret: VAULT_DEV_TOKEN
     HTDC_VAULT_ENDPOINT:
       from_secret: VAULT_DEV_ENDPOINT
+    CONSUL_HTTP_ADDR:
+      from_secret: CONSUL_DEV_HTTP_ADDR
+    CONSUL_HTTP_TOKEN:
+      from_secret: CONSUL_DEV_HTTP_TOKEN
   commands:
     - cd HappyTravel.Gifu.Data
     - dotnet tool restore
@@ -69,6 +73,8 @@ steps:
       from_secret: GITHUB_TOKEN
     VAULT_TOKEN:
       from_secret: VAULT_DEV_TOKEN
+    CONSUL_HTTP_TOKEN:
+      from_secret: CONSUL_DEV_HTTP_TOKEN
     BUILD_VERSION: ${DRONE_COMMIT_SHA:0:7}
   settings:
     registry: registry.happytravel.com
@@ -86,6 +92,7 @@ steps:
       - GITHUB_TOKEN
       - VAULT_TOKEN
       - BUILD_VERSION
+      - CONSUL_HTTP_TOKEN
 
 - name: Deploy to DEV
   image: pelotech/drone-helm3:0.14.2
@@ -141,6 +148,8 @@ steps:
       from_secret: VAULT_PROD_TOKEN
     HTDC_VAULT_ENDPOINT:
       from_secret: VAULT_PROD_ENDPOINT
+    CONSUL_HTTP_TOKEN:
+      from_secret: CONSUL_PROD_HTTP_TOKEN
   commands:
     - cd HappyTravel.Gifu.Data
     - dotnet tool restore
@@ -170,6 +179,7 @@ steps:
       - GITHUB_TOKEN
       - VAULT_TOKEN
       - BUILD_VERSION
+      - CONSUL_HTTP_TOKEN
 
 - name: Deploy to production
   image: pelotech/drone-helm3:0.14.2
