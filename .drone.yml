@@ -163,6 +163,8 @@ steps:
     VAULT_TOKEN:
       from_secret: VAULT_PROD_TOKEN
     BUILD_VERSION: ${DRONE_COMMIT_SHA:0:7}
+    CONSUL_HTTP_TOKEN:
+      from_secret: CONSUL_PROD_HTTP_TOKEN
   settings:
     registry: registry.happytravel.com
     repo: registry.happytravel.com/gifu
