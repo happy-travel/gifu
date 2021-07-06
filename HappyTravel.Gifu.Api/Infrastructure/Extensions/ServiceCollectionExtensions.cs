@@ -135,19 +135,5 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 
             return services;
         }
-        
-        
-        public static IServiceCollection AddTracing(this IServiceCollection services)
-        {
-            services.AddOpenTelemetryTracing(builder =>
-            {
-                builder.AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault())
-                    .SetSampler(new AlwaysOnSampler());
-            });
-
-            return services;
-        }
     }
 }

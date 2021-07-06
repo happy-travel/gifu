@@ -25,10 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="5.0.6" />
     <PackageReference Include="Sentry.AspNetCore" Version="3.6.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.1.4" />
-    <PackageReference Include="OpenTelemetry" Version="1.1.0-beta1" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc3" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc3" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc3" />
+    <PackageReference Include="HappyTravel.Telemetry" Version="0.9.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HappyTravel.Gifu.Data\HappyTravel.Gifu.Data.csproj" />
