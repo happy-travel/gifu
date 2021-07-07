@@ -6,6 +6,7 @@ using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Data;
 using HappyTravel.StdOutLogger.Extensions;
+using HappyTravel.Telemetry.Extensions;
 using HappyTravel.VaultClient;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,9 +19,10 @@ namespace HappyTravel.Gifu.Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
             Configuration = configuration;
+            HostEnvironment = hostEnvironment;
         }
 
 
@@ -51,8 +53,17 @@ namespace HappyTravel.Gifu.Api
                 .ConfigureDatabaseOptions(vaultClient, Configuration)
                 .ConfigureAuthentication(vaultClient, Configuration)
                 .ConfigureIssuer(vaultClient, Configuration)
-                .AddTracing()
-                .AddTransient<IClientService, ClientService>();
+                .AddTransient<IClientService, ClientService>()
+                .AddTracing(Configuration, options =>
+                {
+                    options.ServiceName = $"{HostEnvironment.ApplicationName}-{HostEnvironment.EnvironmentName}";
+                    options.JaegerHost = HostEnvironment.IsLocal()
+                        ? Configuration.GetValue<string>("Jaeger:AgentHost")
+                        : Configuration.GetValue<string>(Configuration.GetValue<string>("Jaeger:AgentHost"));
+                    options.JaegerPort = HostEnvironment.IsLocal()
+                        ? Configuration.GetValue<int>("Jaeger:AgentPort")
+                        : Configuration.GetValue<int>(Configuration.GetValue<string>("Jaeger:AgentPort"));
+                });
         }
 
 
@@ -83,5 +94,6 @@ namespace HappyTravel.Gifu.Api
         
         
         private IConfiguration Configuration { get; }
+        private IHostEnvironment HostEnvironment { get; }
     }
 }
