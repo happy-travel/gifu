@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using HappyTravel.ConsulKeyValueClient.ConfigurationProvider.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.StdOutLogger.Extensions;
@@ -24,6 +25,22 @@ namespace HappyTravel.Gifu.Api
                     webBuilder
                         .UseStartup<Startup>()
                         .UseKestrel()
+                        .UseSentry(options =>
+                        {
+                            options.Dsn = Environment.GetEnvironmentVariable("HTDC_GIFU_SENTRY_ENDPOINT");
+                            options.Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+                            options.IncludeActivityData = true;
+                            options.BeforeSend = sentryEvent =>
+                            {
+                                foreach (var (key, value) in OpenTelemetry.Baggage.Current)
+                                    sentryEvent.SetTag(key, value);
+                                    
+                                sentryEvent.SetTag("TraceId", Activity.Current?.TraceId.ToString() ?? string.Empty);
+                                sentryEvent.SetTag("SpanId", Activity.Current?.SpanId.ToString() ?? string.Empty);
+
+                                return sentryEvent;
+                            };
+                        })
                         .UseDefaultServiceProvider(s =>
                         {
                             s.ValidateScopes = true;
@@ -60,11 +77,7 @@ namespace HappyTravel.Gifu.Api
                             setup.RequestIdHeader = Constants.DefaultRequestIdHeader;
                             setup.UseUtcTimestamp = true;
                         });
-                        logging.AddSentry(c =>
-                        {
-                            c.Dsn = EnvironmentVariableHelper.Get("Sentry:Endpoint", hostingContext.Configuration);
-                            c.Environment = env.EnvironmentName;
-                        });
+                        logging.AddSentry();
                     }
                 });
     }
