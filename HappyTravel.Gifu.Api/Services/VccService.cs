@@ -37,8 +37,10 @@ namespace HappyTravel.Gifu.Api.Services
             static Result<AmexCurrencies> ValidateRequest(VccIssueRequest request)
             {
                 var validator = new InlineValidator<VccIssueRequest>();
+                var today = DateTime.UtcNow.Date;
 
-                validator.RuleFor(r => r.DueDate.Date).GreaterThan(DateTime.UtcNow.Date);
+                validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
+                validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
                 validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
                 validator.RuleFor(r => r.ReferenceCode).NotEmpty();
 
@@ -67,7 +69,7 @@ namespace HappyTravel.Gifu.Api.Services
                         {
                             TokenReferenceId = request.ReferenceCode,
                             TokenAmount = request.MoneyAmount.ToAmExFormat(),
-                            TokenStartDate = DateTime.UtcNow.Date.ToAmExFormat(),
+                            TokenStartDate = request.ActivationDate.ToAmExFormat(),
                             TokenEndDate = request.DueDate.ToAmExFormat()
                         }
                     }
