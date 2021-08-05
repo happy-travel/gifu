@@ -8,7 +8,7 @@ namespace HappyTravel.Gifu.Api.Models
     {
         public string ReferenceCode { get; init; }
         public MoneyAmount MoneyAmount { get; init; }
-        public DateTime StartDate { get; init; }
+        public DateTime ActivationDate { get; init; }
         public DateTime DueDate { get; init; }
     }
 }
