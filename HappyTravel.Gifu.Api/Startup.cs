@@ -43,9 +43,9 @@ namespace HappyTravel.Gifu.Api
                 .AddAuthorization(options =>
                 {
                     options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-                    options.AddPolicy("CanCreateCard", policy =>
+                    options.AddPolicy("CanIssue", policy =>
                     {
-                        policy.RequireClaim("scope", "vcc.create_card");
+                        policy.RequireClaim("scope", "vcc.issue");
                     });
                     options.AddPolicy("CanGetReport", policy =>
                     {
