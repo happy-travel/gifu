@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HappyTravel.Gifu.Api.Controllers
 {
     [ApiController]
-    [Authorize(Policy = "CanGetReport")]
+    [Authorize(Policy = "CanGetHistory")]
     [ApiVersion("1.0")]
     [Route("api/{v:apiVersion}/history")]
     public class HistoryController : ControllerBase
