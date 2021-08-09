@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace HappyTravel.Gifu.Api.Controllers
 {
     [ApiController]
-    [Authorize]
+    [Authorize(Policy = "CanIssue")]
     [ApiVersion("1.0")]
     [Route("api/{v:apiVersion}/cards")]
     public class CardsController : ControllerBase

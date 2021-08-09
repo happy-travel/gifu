@@ -3,15 +3,17 @@ using System;
 using HappyTravel.Gifu.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace HappyTravel.Gifu.Data.Migrations
 {
     [DbContext(typeof(GifuContext))]
-    partial class GifuContextModelSnapshot : ModelSnapshot
+    [Migration("20210809030025_AddActivationDateColumn")]
+    partial class AddActivationDateColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,10 +31,6 @@ namespace HappyTravel.Gifu.Data.Migrations
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric");
-
-                    b.Property<string>("CardNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("ClientId")
                         .IsRequired()

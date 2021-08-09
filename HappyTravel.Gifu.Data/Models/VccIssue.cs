@@ -9,7 +9,9 @@ namespace HappyTravel.Gifu.Data.Models
         public string ReferenceCode { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public Currencies Currency { get; set; }
+        public DateTime ActivationDate { get; set; }
         public DateTime DueDate { get; set; }
         public string ClientId { get; set; } = string.Empty;
+        public string CardNumber { get; set; } = string.Empty;
     }
 }
