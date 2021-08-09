@@ -101,7 +101,8 @@ namespace HappyTravel.Gifu.Api.Services
                     Currency = request.MoneyAmount.Currency,
                     ActivationDate = request.ActivationDate,
                     DueDate = request.DueDate,
-                    ClientId = clientId
+                    ClientId = clientId,
+                    CardNumber = result.Value.Vcc.Number
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
