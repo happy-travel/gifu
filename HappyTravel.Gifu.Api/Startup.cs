@@ -8,6 +8,7 @@ using HappyTravel.Gifu.Data;
 using HappyTravel.StdOutLogger.Extensions;
 using HappyTravel.Telemetry.Extensions;
 using HappyTravel.VaultClient;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -39,7 +40,18 @@ namespace HappyTravel.Gifu.Api
 
             services
                 .AddMvcCore()
-                .AddAuthorization()
+                .AddAuthorization(options =>
+                {
+                    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                    options.AddPolicy("CanCreateCard", policy =>
+                    {
+                        policy.RequireClaim("scope", "vcc.create_card");
+                    });
+                    options.AddPolicy("CanGetReport", policy =>
+                    {
+                        policy.RequireClaim("scope", "vcc.report");
+                    });
+                })
                 .AddApiExplorer();
 
             services.AddHealthChecks()

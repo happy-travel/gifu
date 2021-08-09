@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -97,6 +99,7 @@ namespace HappyTravel.Gifu.Api.Services
                     ReferenceCode = request.ReferenceCode,
                     Amount = request.MoneyAmount.Amount,
                     Currency = request.MoneyAmount.Currency,
+                    ActivationDate = request.ActivationDate,
                     DueDate = request.DueDate,
                     ClientId = clientId
                 });
@@ -107,7 +110,13 @@ namespace HappyTravel.Gifu.Api.Services
                 return result.Value.Vcc;
             }
         }
-        
+
+
+        public Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken) 
+            => _context.VccIssues
+                .Where(c => referenceCodes.Contains(c.ReferenceCode))
+                .ToListAsync(cancellationToken);
+
 
         private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
