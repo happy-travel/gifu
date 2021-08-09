@@ -12,10 +12,10 @@ namespace HappyTravel.Gifu.Api.Controllers
     [ApiController]
     [Authorize(Policy = "CanGetReport")]
     [ApiVersion("1.0")]
-    [Route("api/{v:apiVersion}/reports")]
-    public class ReportsController : ControllerBase
+    [Route("api/{v:apiVersion}/history")]
+    public class HistoryController : ControllerBase
     {
-        public ReportsController(IVccService vccService)
+        public HistoryController(IVccService vccService)
         {
             _vccService = vccService;
         }
@@ -28,7 +28,7 @@ namespace HappyTravel.Gifu.Api.Controllers
         /// <param name="cancellationToken">Cancellation token</param>
         [HttpPost]
         [ProducesResponseType(typeof(List<VccIssue>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> Issue([FromBody] List<string> referenceCodes, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetCardsInfo([FromBody] List<string> referenceCodes, CancellationToken cancellationToken)
         {
             return Ok(await _vccService.GetCardsInfo(referenceCodes, cancellationToken));
         }

@@ -47,9 +47,9 @@ namespace HappyTravel.Gifu.Api
                     {
                         policy.RequireClaim("scope", "vcc.issue");
                     });
-                    options.AddPolicy("CanGetReport", policy =>
+                    options.AddPolicy("CanGetHistory", policy =>
                     {
-                        policy.RequireClaim("scope", "vcc.report");
+                        policy.RequireClaim("scope", "vcc.history");
                     });
                 })
                 .AddApiExplorer();
