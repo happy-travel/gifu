@@ -12,5 +12,12 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>Virtual credit card info</returns>
         </member>
+        <member name="M:HappyTravel.Gifu.Api.Controllers.HistoryController.GetCardsInfo(System.Collections.Generic.List{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Returns list of generated cards
+            </summary>
+            <param name="referenceCodes">Booking reference codes</param>
+            <param name="cancellationToken">Cancellation token</param>
+        </member>
     </members>
 </doc>

@@ -70,7 +70,6 @@ namespace HappyTravel.Gifu.Api
                         logging.AddConsole();
                     else
                     {
-                        logging.AddConsole();
                         logging.AddStdOutLogger(setup =>
                         {
                             setup.IncludeScopes = true;

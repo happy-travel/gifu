@@ -99,7 +99,7 @@ namespace HappyTravel.Gifu.Api
                 .UseAuthorization()
                 .UseEndpoints(endpoints =>
                 {
-                    endpoints.MapHealthChecks("/health");
+                    endpoints.MapHealthChecks("/health").AllowAnonymous();
                     endpoints.MapControllers();
                 });
         }
