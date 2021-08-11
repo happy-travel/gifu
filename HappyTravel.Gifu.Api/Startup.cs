@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using HappyTravel.ErrorHandling.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
+using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Data;
 using HappyTravel.StdOutLogger.Extensions;
@@ -56,6 +57,8 @@ namespace HappyTravel.Gifu.Api
 
             services.AddHealthChecks()
                 .AddDbContextCheck<GifuContext>();
+
+            services.Configure<UserDefinedFieldsIndexes>(Configuration.GetSection("UserDefinedFieldsIndexes"));
 
             services
                 .AddProblemDetailsErrorHandling()
