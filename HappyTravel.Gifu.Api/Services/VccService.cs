@@ -22,12 +22,14 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public class VccService : IVccService
     {
-        public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context, IOptions<AmExOptions> options)
+        public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context, IOptions<AmExOptions> options,
+            IOptionsMonitor<UserDefinedFieldsIndexes> fieldsIndexesMonitor)
         {
             _client = client;
             _logger = logger;
             _context = context;
             _options = options.Value;
+            _fieldsIndexesMonitor = fieldsIndexesMonitor;
         }
         
         
@@ -63,6 +65,8 @@ namespace HappyTravel.Gifu.Api.Services
             {
                 if(!_options.Accounts.TryGetValue(currency, out var accountId))
                     return Result.Failure<(string, string, VirtualCreditCard)>($"Cannot get accountId for currency `{currency}`");
+
+                var fieldsIndexes = _fieldsIndexesMonitor.CurrentValue;
                 
                 var uniqueId = ShortId.Generate(new GenerationOptions
                 {
@@ -89,7 +93,7 @@ namespace HappyTravel.Gifu.Api.Services
                             {
                                 new CustomField
                                 {
-                                    Index = "1",
+                                    Index = fieldsIndexes.ReferenceCode,
                                     Value = request.ReferenceCode
                                 }
                             }
@@ -154,5 +158,6 @@ namespace HappyTravel.Gifu.Api.Services
         private readonly ILogger<VccService> _logger;
         private readonly GifuContext _context;
         private readonly AmExOptions _options;
+        private readonly IOptionsMonitor<UserDefinedFieldsIndexes> _fieldsIndexesMonitor;
     }
 }
