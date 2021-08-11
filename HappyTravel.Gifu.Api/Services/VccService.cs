@@ -93,7 +93,7 @@ namespace HappyTravel.Gifu.Api.Services
                             {
                                 new CustomField
                                 {
-                                    Index = fieldsIndexes.ReferenceCode,
+                                    Index = fieldsIndexes.BookingReferenceCode,
                                     Value = request.ReferenceCode
                                 }
                             }
