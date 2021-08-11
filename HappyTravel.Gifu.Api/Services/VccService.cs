@@ -15,6 +15,8 @@ using HappyTravel.Gifu.Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using shortid;
+using shortid.Configuration;
 
 namespace HappyTravel.Gifu.Api.Services
 {
@@ -57,10 +59,17 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            async Task<Result<(string, VirtualCreditCard)>> CreateCard(AmexCurrencies currency)
+            async Task<Result<(string, string, VirtualCreditCard)>> CreateCard(AmexCurrencies currency)
             {
                 if(!_options.Accounts.TryGetValue(currency, out var accountId))
-                    return Result.Failure<(string, VirtualCreditCard)>($"Cannot get accountId for currency `{currency}`");
+                    return Result.Failure<(string, string, VirtualCreditCard)>($"Cannot get accountId for currency `{currency}`");
+                
+                var uniqueId = ShortId.Generate(new GenerationOptions
+                {
+                    UseNumbers = true,
+                    UseSpecialCharacters = false,
+                    Length = 15
+                });
                 
                 var payload = new CreateTokenRequest
                 {
@@ -69,10 +78,21 @@ namespace HappyTravel.Gifu.Api.Services
                         BillingAccountId = accountId,
                         TokenDetails = new TokenDetails
                         {
-                            TokenReferenceId = request.ReferenceCode,
+                            TokenReferenceId = uniqueId,
                             TokenAmount = request.MoneyAmount.ToAmExFormat(),
                             TokenStartDate = request.ActivationDate.ToAmExFormat(),
                             TokenEndDate = request.DueDate.ToAmExFormat()
+                        },
+                        ReconciliationFields = new ReconciliationFields
+                        {
+                            UserDefinedFieldsGroup = new List<CustomField>
+                            {
+                                new CustomField
+                                {
+                                    Index = "1",
+                                    Value = request.ReferenceCode
+                                }
+                            }
                         }
                     }
                 };
@@ -80,12 +100,12 @@ namespace HappyTravel.Gifu.Api.Services
                 var (transactionId, response) = await _client.CreateToken(payload);
                 
                 return response.Status.ShortMessage != "success" 
-                    ? Result.Failure<(string, VirtualCreditCard)>(response.Status.DetailedMessage) 
-                    : (transactionId, response.TokenIssuanceData.TokenDetails.ToVirtualCreditCard());
+                    ? Result.Failure<(string, string, VirtualCreditCard)>(response.Status.DetailedMessage) 
+                    : (transactionId, uniqueId, response.TokenIssuanceData.TokenDetails.ToVirtualCreditCard());
             }
 
             
-            async Task<Result<VirtualCreditCard>> WriteLog(Result<(string TransactionId, VirtualCreditCard Vcc)> result)
+            async Task<Result<VirtualCreditCard>> WriteLog(Result<(string TransactionId, string UniqueId, VirtualCreditCard Vcc)> result)
             {
                 if (result.IsFailure)
                 {
@@ -96,6 +116,7 @@ namespace HappyTravel.Gifu.Api.Services
                 _context.VccIssues.Add(new VccIssue
                 {
                     TransactionId = result.Value.TransactionId,
+                    UniqueId = result.Value.UniqueId,
                     ReferenceCode = request.ReferenceCode,
                     Amount = request.MoneyAmount.Amount,
                     Currency = request.MoneyAmount.Currency,

@@ -9,5 +9,8 @@ namespace HappyTravel.Gifu.Api.Models.AmEx.Request
         
         [JsonPropertyName("token_details")]
         public TokenDetails TokenDetails { get; init; }
+        
+        [JsonPropertyName("reconciliation_fields")]
+        public ReconciliationFields ReconciliationFields { get; init; }
     }
 }
