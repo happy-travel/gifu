@@ -2,6 +2,6 @@
 {
     public class UserDefinedFieldsIndexes
     {
-        public string BookingReferenceCode { get; set; } = string.Empty;
+        public string BookingReferenceCodeIndex { get; set; } = string.Empty;
     }
 }
