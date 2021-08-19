@@ -37,10 +37,10 @@ namespace HappyTravel.Gifu.Api.Controllers
             if (isFailure)
                 return BadRequest(new ProblemDetails { Detail = error });
 
-            var info = await _vccService.Issue(request, clientId, cancellationToken);
-            return info.IsSuccess
-                ? Ok(info.Value)
-                : BadRequest(new ProblemDetails { Detail = info.Error });
+            var issueResult = await _vccService.Issue(request, clientId, cancellationToken);
+            return issueResult.IsSuccess
+                ? Ok(issueResult.Value)
+                : BadRequest(new ProblemDetails { Detail = issueResult.Error });
         }
 
 
