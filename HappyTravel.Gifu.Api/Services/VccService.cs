@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
+using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx;
@@ -35,9 +36,11 @@ namespace HappyTravel.Gifu.Api.Services
         
         public Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
         {
+            _logger.LogVccIssueRequestStarted(request.ReferenceCode, request.MoneyAmount.Amount, request.MoneyAmount.Currency.ToString());
+            
             return ValidateRequest(request)
                 .Bind(CreateCard)
-                .Finally(WriteLog);
+                .Finally(SaveResult);
 
 
             static Result<AmexCurrencies> ValidateRequest(VccIssueRequest request)
@@ -51,7 +54,7 @@ namespace HappyTravel.Gifu.Api.Services
                 validator.RuleFor(r => r.ReferenceCode).NotEmpty();
 
                 var result = validator.Validate(request);
-                
+
                 if (!result.IsValid)
                     return Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage)));
 
@@ -115,11 +118,11 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
             
-            async Task<Result<VirtualCreditCard>> WriteLog(Result<(string TransactionId, string UniqueId, VirtualCreditCard Vcc)> result)
+            async Task<Result<VirtualCreditCard>> SaveResult(Result<(string TransactionId, string UniqueId, VirtualCreditCard Vcc)> result)
             {
                 if (result.IsFailure)
                 {
-                    _logger.LogError("Creating a VCC for the reference code `{ReferenceCode}` completed with the error: `{Error}`", request.ReferenceCode, result.Error);
+                    _logger.LogVccIssueRequestFailure(request.ReferenceCode, result.Error);
                     return Result.Failure<VirtualCreditCard>($"Error creating VCC for reference code `{request.ReferenceCode}`");
                 }
                 
@@ -137,7 +140,7 @@ namespace HappyTravel.Gifu.Api.Services
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation("Creating a VCC for the reference code `{ReferenceCode}` completed", request.ReferenceCode);
+                _logger.LogVccIssueRequestSuccess(request.ReferenceCode, result.Value.UniqueId);
                 
                 return result.Value.Vcc;
             }
