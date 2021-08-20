@@ -76,7 +76,10 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
             var amExAccounts = vaultClient.Get(configuration["AmexAccounts"])
                 .GetAwaiter().GetResult();
 
-            services.AddHttpClient<IAmExClient, AmExClient>();
+            if (configuration.GetValue<bool>("Testing:UseFakeAmexClient"))
+                services.AddHttpClient<IAmExClient, FakeAmexClient>();
+            else
+                services.AddHttpClient<IAmExClient, AmExClient>();
 
             var accounts = amExAccounts.Select(a => new
                 {

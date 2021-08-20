@@ -19,5 +19,10 @@
             <param name="referenceCodes">Booking reference codes</param>
             <param name="cancellationToken">Cancellation token</param>
         </member>
+        <member name="T:HappyTravel.Gifu.Api.Services.FakeAmexClient">
+            <summary>
+            Fake class to use in integration and end-to-end tests. AmEx returns the same date every time which is not suitable in some cases
+            </summary>
+        </member>
     </members>
 </doc>
