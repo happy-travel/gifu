@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Data;
+using HappyTravel.HttpRequestLogger;
 using HappyTravel.VaultClient;
 using IdentityServer4.AccessTokenValidation;
 using Microsoft.AspNetCore.Builder;
@@ -15,10 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 
 namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 {
@@ -77,9 +73,14 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
                 .GetAwaiter().GetResult();
 
             if (configuration.GetValue<bool>("Testing:UseFakeAmexClient"))
+            {
                 services.AddHttpClient<IAmExClient, FakeAmexClient>();
+            }
             else
-                services.AddHttpClient<IAmExClient, AmExClient>();
+            {
+                services.AddHttpClient<IAmExClient, AmExClient>()
+                    .AddHttpClientRequestLogging(configuration);
+            }
 
             var accounts = amExAccounts.Select(a => new
                 {
