@@ -96,12 +96,6 @@ namespace HappyTravel.Gifu.Api.Services
                             {
                                 new ()
                                 {
-                                    // User Id field always comes first
-                                    Index = "1",
-                                    Value = uniqueId
-                                },
-                                new ()
-                                {
                                     Index = fieldsIndexes.BookingReferenceCodeIndex,
                                     Value = request.ReferenceCode
                                 }
