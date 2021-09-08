@@ -29,7 +29,12 @@ namespace HappyTravel.Gifu.Api.Services
             return Task.FromResult((transactionId, response));
         }
 
+        
         public Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload) 
+            => Task.FromResult((string.Empty, new AmexResponse()));
+
+        
+        public Task<(string TransactionId, AmexResponse Response)> ModifyAmount(ModifyRequest payload) 
             => Task.FromResult((string.Empty, new AmexResponse()));
     }
 }

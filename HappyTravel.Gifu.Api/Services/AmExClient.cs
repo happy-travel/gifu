@@ -30,6 +30,10 @@ namespace HappyTravel.Gifu.Api.Services
             => SendRequest(HttpMethod.Delete, payload);
 
 
+        public Task<(string TransactionId, AmexResponse Response)> ModifyAmount(ModifyRequest payload)
+            => SendRequest(HttpMethod.Put, payload);
+
+
         private async Task<(string TransactionId, AmexResponse Response)> SendRequest<T>(HttpMethod httpMethod, T payload)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";

@@ -10,6 +10,7 @@ namespace HappyTravel.Gifu.Data
 
 
         public DbSet<VccIssue> VccIssues => Set<VccIssue>();
+        public DbSet<AmountChangesHistory> AmountChangesHistories => Set<AmountChangesHistory>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -17,6 +18,11 @@ namespace HappyTravel.Gifu.Data
             modelBuilder.Entity<VccIssue>(b =>
             {
                 b.HasKey(i => i.TransactionId);
+            });
+
+            modelBuilder.Entity<AmountChangesHistory>(b =>
+            {
+                b.HasKey(h => h.VccId);
             });
         }
     }

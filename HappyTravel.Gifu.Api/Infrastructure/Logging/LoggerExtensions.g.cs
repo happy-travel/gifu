@@ -35,6 +35,18 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
                 new EventId(81022, "VccDeleteRequestSuccess"),
                 "Deleting VCC for '{ReferenceCode}' completed successfully");
             
+            VccModifyAmountRequestStarted = LoggerMessage.Define<string, decimal>(LogLevel.Information,
+                new EventId(81030, "VccModifyAmountRequestStarted"),
+                "Modifying VCC amount for '{ReferenceCode}'. New value: {amount}");
+            
+            VccModifyAmountRequestFailure = LoggerMessage.Define<string, string>(LogLevel.Error,
+                new EventId(81031, "VccModifyAmountRequestFailure"),
+                "Modifying VCC amount for '{ReferenceCode}' failed. '{Error}'");
+            
+            VccModifyAmountRequestSuccess = LoggerMessage.Define<string, decimal>(LogLevel.Information,
+                new EventId(81032, "VccModifyAmountRequestSuccess"),
+                "Modifying VCC amount for '{ReferenceCode}' completed successfully. New value: {amount}");
+            
         }
     
                 
@@ -58,6 +70,15 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
                 
          public static void LogVccDeleteRequestSuccess(this ILogger logger, string ReferenceCode, Exception exception = null)
             => VccDeleteRequestSuccess(logger, ReferenceCode, exception);
+                
+         public static void LogVccModifyAmountRequestStarted(this ILogger logger, string ReferenceCode, decimal amount, Exception exception = null)
+            => VccModifyAmountRequestStarted(logger, ReferenceCode, amount, exception);
+                
+         public static void LogVccModifyAmountRequestFailure(this ILogger logger, string ReferenceCode, string Error, Exception exception = null)
+            => VccModifyAmountRequestFailure(logger, ReferenceCode, Error, exception);
+                
+         public static void LogVccModifyAmountRequestSuccess(this ILogger logger, string ReferenceCode, decimal amount, Exception exception = null)
+            => VccModifyAmountRequestSuccess(logger, ReferenceCode, amount, exception);
     
     
         
@@ -74,5 +95,11 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
         private static readonly Action<ILogger, string, string, Exception> VccDeleteRequestFailure;
         
         private static readonly Action<ILogger, string, Exception> VccDeleteRequestSuccess;
+        
+        private static readonly Action<ILogger, string, decimal, Exception> VccModifyAmountRequestStarted;
+        
+        private static readonly Action<ILogger, string, string, Exception> VccModifyAmountRequestFailure;
+        
+        private static readonly Action<ILogger, string, decimal, Exception> VccModifyAmountRequestSuccess;
     }
 }

@@ -8,5 +8,6 @@ namespace HappyTravel.Gifu.Api.Services
     {
         Task<(string TransactionId, AmexResponse Response)> CreateToken(CreateTokenRequest payload);
         Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload);
+        Task<(string TransactionId, AmexResponse Response)> ModifyAmount(ModifyRequest payload);
     }
 }

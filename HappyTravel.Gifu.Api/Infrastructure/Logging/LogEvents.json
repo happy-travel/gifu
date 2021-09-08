@@ -5,5 +5,8 @@
     {"id": 81016, "name": "VccIssueRequestSuccess", "level": "Information", "template": "Processing VCC issue request for '{ReferenceCode}' completed successfully. UniqueId: '{UniqueId}'", "argumentTypes": ["string", "string"]},
     {"Id": 81020, "name": "VccDeleteRequestStarted", "level": "Information", "template": "Deleting VCC for '{ReferenceCode}'", "argumentTypes": ["string"]},
     {"Id": 81021, "name": "VccDeleteRequestFailure", "level": "Error", "template": "Deleting VCC for '{ReferenceCode}' failed. '{Error}'", "argumentTypes": ["string", "string"]},
-    {"Id": 81022, "name": "VccDeleteRequestSuccess", "level": "Information", "template": "Deleting VCC for '{ReferenceCode}' completed successfully", "argumentTypes": ["string"]}
+    {"Id": 81022, "name": "VccDeleteRequestSuccess", "level": "Information", "template": "Deleting VCC for '{ReferenceCode}' completed successfully", "argumentTypes": ["string"]},
+    {"Id": 81030, "name": "VccModifyAmountRequestStarted", "level": "Information", "template": "Modifying VCC amount for '{ReferenceCode}'. New value: {amount}", "argumentTypes": ["string", "decimal"]},
+    {"Id": 81031, "name": "VccModifyAmountRequestFailure", "level": "Error", "template": "Modifying VCC amount for '{ReferenceCode}' failed. '{Error}'", "argumentTypes": ["string", "string"]},
+    {"Id": 81032, "name": "VccModifyAmountRequestSuccess", "level": "Information", "template": "Modifying VCC amount for '{ReferenceCode}' completed successfully. New value: {amount}", "argumentTypes": ["string", "decimal"]}
 ]
