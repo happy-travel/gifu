@@ -189,9 +189,13 @@ namespace HappyTravel.Gifu.Api.Services
             
             Result<VccIssue> ValidateRequest(VccIssue vcc)
             {
-                return vcc.Currency == amount.Currency
-                    ? vcc
-                    : Result.Failure<VccIssue>("Amount currency must be equal with VCC currency");
+                if (vcc.Currency != amount.Currency)
+                    return Result.Failure<VccIssue>("Amount currency must be equal with VCC currency");
+                
+                if (amount.Amount >= vcc.Amount)
+                    Result.Failure<VccIssue>("Amount must be less than VCC amount");
+                
+                return vcc;
             }
 
 
