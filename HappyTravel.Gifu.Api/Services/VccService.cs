@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using shortid;
 using shortid.Configuration;
+using TokenDetails = HappyTravel.Gifu.Api.Models.AmEx.Request.TokenDetails;
 
 namespace HappyTravel.Gifu.Api.Services
 {
@@ -146,6 +147,35 @@ namespace HappyTravel.Gifu.Api.Services
                 .Where(c => referenceCodes.Contains(c.ReferenceCode))
                 .ToListAsync(cancellationToken);
 
+        
+        public async Task<Result> Delete(string referenceCode)
+        {
+            _logger.LogVccDeleteRequestStarted(referenceCode);
+
+            return await GetVcc(referenceCode)
+                .Bind(DeleteCard);
+
+
+            async Task<Result> DeleteCard(VccIssue vcc)
+            {
+                var payload = new DeleteRequest
+                {
+                    TokenReferenceId = vcc.UniqueId
+                };
+
+                var (_, response) = await _client.Delete(payload);
+
+                if (response.Status.ShortMessage == "success")
+                {
+                    _logger.LogVccDeleteRequestSuccess(referenceCode);
+                    return Result.Success();
+                }
+                
+                _logger.LogVccDeleteRequestFailure(referenceCode, response.Status.DetailedMessage);
+                return Result.Failure($"Deleting VCC for `{referenceCode}` failed");
+            }
+        }
+
 
         private static string TrimCardNumber(string cardNumber)
         {
@@ -154,6 +184,15 @@ namespace HappyTravel.Gifu.Api.Services
 
             var cardNumberLength = cardNumber.Length;
             return cardNumber[^4..].PadLeft(cardNumberLength - 4, '*');
+        }
+
+
+        private async Task<Result<VccIssue>> GetVcc(string referenceCode)
+        {
+            var issue = await _context.VccIssues
+                .SingleOrDefaultAsync(i => i.ReferenceCode == referenceCode);
+
+            return issue ?? Result.Failure<VccIssue>($"VCC with reference code `{referenceCode}` not found");
         }
 
 

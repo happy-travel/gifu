@@ -1,9 +1,11 @@
 ﻿using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Amex.Api.Client.Core.Security.Authentication;
+using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
@@ -20,18 +22,26 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public async Task<(string TransactionId, CreateTokenResponse Response)> CreateToken(CreateTokenRequest payload)
+        public Task<(string TransactionId, AmexResponse Response)> CreateToken(CreateTokenRequest payload) 
+            => SendRequest(HttpMethod.Post, payload);
+
+
+        public Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload) 
+            => SendRequest(HttpMethod.Delete, payload);
+
+
+        private async Task<(string TransactionId, AmexResponse Response)> SendRequest<T>(HttpMethod httpMethod, T payload)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
-            var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+            var request = new HttpRequestMessage(httpMethod, endpoint)
             {
                 Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
             };
             
             await SignMessage(request);
-
+            
             var response = await _httpClient.SendAsync(request);
-            var result = await JsonSerializer.DeserializeAsync<CreateTokenResponse>(await response.Content.ReadAsStreamAsync());
+            var result = await response.Content.ReadFromJsonAsync<AmexResponse>();
             var transactionId = string.Empty;
             
             if (response.Headers.TryGetValues("transaction_id", out var values))

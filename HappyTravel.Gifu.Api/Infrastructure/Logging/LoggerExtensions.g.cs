@@ -21,7 +21,19 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
             
             VccIssueRequestSuccess = LoggerMessage.Define<string, string>(LogLevel.Information,
                 new EventId(81016, "VccIssueRequestSuccess"),
-                "Processing VCC issue request for '{ReferenceCode}' completed successfully. UniqueId {UniqueId}");
+                "Processing VCC issue request for '{ReferenceCode}' completed successfully. UniqueId: '{UniqueId}'");
+            
+            VccDeleteRequestStarted = LoggerMessage.Define<string>(LogLevel.Information,
+                new EventId(81020, "VccDeleteRequestStarted"),
+                "Deleting VCC for '{ReferenceCode}'");
+            
+            VccDeleteRequestFailure = LoggerMessage.Define<string, string>(LogLevel.Error,
+                new EventId(81021, "VccDeleteRequestFailure"),
+                "Deleting VCC for '{ReferenceCode}' failed. '{Error}'");
+            
+            VccDeleteRequestSuccess = LoggerMessage.Define<string>(LogLevel.Information,
+                new EventId(81022, "VccDeleteRequestSuccess"),
+                "Deleting VCC for '{ReferenceCode}' completed successfully");
             
         }
     
@@ -37,6 +49,15 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
                 
          public static void LogVccIssueRequestSuccess(this ILogger logger, string ReferenceCode, string UniqueId, Exception exception = null)
             => VccIssueRequestSuccess(logger, ReferenceCode, UniqueId, exception);
+                
+         public static void LogVccDeleteRequestStarted(this ILogger logger, string ReferenceCode, Exception exception = null)
+            => VccDeleteRequestStarted(logger, ReferenceCode, exception);
+                
+         public static void LogVccDeleteRequestFailure(this ILogger logger, string ReferenceCode, string Error, Exception exception = null)
+            => VccDeleteRequestFailure(logger, ReferenceCode, Error, exception);
+                
+         public static void LogVccDeleteRequestSuccess(this ILogger logger, string ReferenceCode, Exception exception = null)
+            => VccDeleteRequestSuccess(logger, ReferenceCode, exception);
     
     
         
@@ -47,5 +68,11 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
         private static readonly Action<ILogger, string, string, Exception> VccIssueRequestFailure;
         
         private static readonly Action<ILogger, string, string, Exception> VccIssueRequestSuccess;
+        
+        private static readonly Action<ILogger, string, Exception> VccDeleteRequestStarted;
+        
+        private static readonly Action<ILogger, string, string, Exception> VccDeleteRequestFailure;
+        
+        private static readonly Action<ILogger, string, Exception> VccDeleteRequestSuccess;
     }
 }

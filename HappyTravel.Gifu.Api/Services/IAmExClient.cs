@@ -6,6 +6,7 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public interface IAmExClient
     {
-        Task<(string TransactionId, CreateTokenResponse Response)> CreateToken(CreateTokenRequest payload);
+        Task<(string TransactionId, AmexResponse Response)> CreateToken(CreateTokenRequest payload);
+        Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload);
     }
 }
