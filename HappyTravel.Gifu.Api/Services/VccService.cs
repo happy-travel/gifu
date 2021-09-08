@@ -13,6 +13,7 @@ using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
+using HappyTravel.Money.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -173,6 +174,69 @@ namespace HappyTravel.Gifu.Api.Services
                 
                 _logger.LogVccDeleteRequestFailure(referenceCode, response.Status.DetailedMessage);
                 return Result.Failure($"Deleting VCC for `{referenceCode}` failed");
+            }
+        }
+
+        public Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount)
+        {
+            _logger.LogVccModifyAmountRequestStarted(referenceCode, amount.Amount);
+            
+            return GetVcc(referenceCode)
+                .Bind(ValidateRequest)
+                .Bind(ModifyCardAmount)
+                .Bind(SaveHistory);
+            
+            
+            Result<VccIssue> ValidateRequest(VccIssue vcc)
+            {
+                return vcc.Currency == amount.Currency
+                    ? vcc
+                    : Result.Failure<VccIssue>("Amount currency must be equal with VCC currency");
+            }
+
+
+            async Task<Result<VccIssue>> ModifyCardAmount(VccIssue vcc)
+            {
+                var payload = new ModifyRequest
+                {
+                    TokenIssuanceParams = new ModifyAmountTokenIssuanceParams
+                    {
+                        TokenDetails = new ModifyAmountTokenDetails
+                        {
+                            TokenReferenceId = vcc.UniqueId,
+                            TokenAmount = amount.ToAmExFormat()
+                        }
+                    }
+                };
+                
+                var (_, response) = await _client.ModifyAmount(payload);
+
+                if (response.Status.ShortMessage == "success")
+                {
+                    _logger.LogVccModifyAmountRequestSuccess(referenceCode, amount.Amount);
+                    return vcc;
+                }
+                
+                _logger.LogVccModifyAmountRequestFailure(referenceCode, response.Status.DetailedMessage);
+                return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
+            }
+
+
+            async Task<Result> SaveHistory(VccIssue vcc)
+            {
+                var amountBefore = vcc.Amount;
+                vcc.Amount = amount.Amount;
+                
+                _context.AmountChangesHistories.Add(new AmountChangesHistory
+                {
+                    VccId = vcc.UniqueId,
+                    AmountAfter = amount.Amount,
+                    AmountBefore = amountBefore,
+                    Date = DateTime.UtcNow
+                });
+
+                await _context.SaveChangesAsync();
+                return Result.Success();
             }
         }
 

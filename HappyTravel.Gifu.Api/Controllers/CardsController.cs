@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Money.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -51,6 +52,20 @@ namespace HappyTravel.Gifu.Api.Controllers
         public async Task<IActionResult> Delete(string referenceCode)
         {
             var (isSuccess, _, error) = await _vccService.Delete(referenceCode);
+            return isSuccess
+                ? Ok()
+                : BadRequest(new ProblemDetails {Detail = error});
+        }
+
+
+        /// <summary>
+        /// Modify card amount
+        /// </summary>
+        [HttpPut("{referenceCode}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ModifyAmount(string referenceCode, [FromBody] MoneyAmount amount)
+        {
+            var (isSuccess, _, error) = await _vccService.ModifyAmount(referenceCode, amount);
             return isSuccess
                 ? Ok()
                 : BadRequest(new ProblemDetails {Detail = error});
