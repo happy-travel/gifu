@@ -11,5 +11,6 @@ namespace HappyTravel.Gifu.Api.Services
     {
         Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken);
         Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken);
+        Task<Result> Delete(string referenceCode);
     }
 }

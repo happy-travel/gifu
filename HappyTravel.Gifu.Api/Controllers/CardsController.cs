@@ -44,6 +44,19 @@ namespace HappyTravel.Gifu.Api.Controllers
         }
 
 
+        /// <summary>
+        /// Delete virtual card
+        /// </summary>
+        [HttpDelete("{referenceCode}")]
+        public async Task<IActionResult> Delete(string referenceCode)
+        {
+            var (isSuccess, _, error) = await _vccService.Delete(referenceCode);
+            return isSuccess
+                ? Ok()
+                : BadRequest(new ProblemDetails {Detail = error});
+        }
+
+
         private readonly IVccService _vccService;
         private readonly IClientService _clientService;
     }

@@ -10,10 +10,10 @@ namespace HappyTravel.Gifu.Api.Services
     /// </summary>
     public class FakeAmexClient : IAmExClient
     {
-        public Task<(string TransactionId, CreateTokenResponse Response)> CreateToken(CreateTokenRequest payload)
+        public Task<(string TransactionId, AmexResponse Response)> CreateToken(CreateTokenRequest payload)
         {
             var transactionId = Guid.NewGuid().ToString();
-            var response = new CreateTokenResponse()
+            var response = new AmexResponse()
             {
                 Status = new Status { ShortMessage = "success" },
                 TokenIssuanceData = new TokenIssuanceData
@@ -28,5 +28,8 @@ namespace HappyTravel.Gifu.Api.Services
             };
             return Task.FromResult((transactionId, response));
         }
+
+        public Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload) 
+            => throw new NotImplementedException();
     }
 }
