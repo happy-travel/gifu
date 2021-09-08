@@ -30,6 +30,6 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
         public Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload) 
-            => throw new NotImplementedException();
+            => Task.FromResult((string.Empty, new AmexResponse()));
     }
 }
