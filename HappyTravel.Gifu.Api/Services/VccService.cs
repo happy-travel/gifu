@@ -36,16 +36,16 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
+        public async Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
         {
             _logger.LogVccIssueRequestStarted(request.ReferenceCode, request.MoneyAmount.Amount, request.MoneyAmount.Currency.ToString());
             
-            return ValidateRequest(request)
+            return await ValidateRequest()
                 .Bind(CreateCard)
                 .Finally(SaveResult);
 
 
-            static Result<AmexCurrencies> ValidateRequest(VccIssueRequest request)
+            async Task<Result<AmexCurrencies>> ValidateRequest()
             {
                 var validator = new InlineValidator<VccIssueRequest>();
                 var today = DateTime.UtcNow.Date;
@@ -53,9 +53,16 @@ namespace HappyTravel.Gifu.Api.Services
                 validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
                 validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
                 validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
-                validator.RuleFor(r => r.ReferenceCode).NotEmpty();
+                validator.RuleFor(r => r.ReferenceCode)
+                    .NotEmpty()
+                    .MustAsync(async (referenceCode, token) =>
+                    {
+                        return !await _context.VccIssues
+                            .AnyAsync(vcc => vcc.ReferenceCode == referenceCode, token);
+                    })
+                    .WithMessage($"VCC for '{request.ReferenceCode}' already issued");
 
-                var result = validator.Validate(request);
+                var result = await validator.ValidateAsync(request, cancellationToken);
 
                 if (!result.IsValid)
                     return Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage)));
