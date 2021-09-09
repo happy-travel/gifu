@@ -94,14 +94,7 @@ namespace HappyTravel.Gifu.Api.Services
                         },
                         ReconciliationFields = new ReconciliationFields
                         {
-                            UserDefinedFieldsGroup = new List<CustomField>
-                            {
-                                new ()
-                                {
-                                    Index = fieldsIndexes.BookingReferenceCodeIndex,
-                                    Value = request.ReferenceCode
-                                }
-                            }
+                            UserDefinedFieldsGroup = MapToCustomFieldList(request.ReferenceCode, request.SpecialValues)
                         }
                     }
                 };
@@ -261,6 +254,38 @@ namespace HappyTravel.Gifu.Api.Services
                 .SingleOrDefaultAsync(i => i.ReferenceCode == referenceCode);
 
             return issue ?? Result.Failure<VccIssue>($"VCC with reference code `{referenceCode}` not found");
+        }
+
+        private List<CustomField> MapToCustomFieldList(string referenceCode, Dictionary<string, string> dictionary)
+        {
+            var list = new List<CustomField>
+            {
+                new()
+                {
+                    Index = _fieldsIndexesMonitor.CurrentValue.BookingReferenceCodeIndex,
+                    Value = referenceCode[..20]
+                }
+            };
+
+            if (dictionary.TryGetValue("SupplierName", out var supplierName))
+            {
+                list.Add(new CustomField
+                {
+                    Index = _fieldsIndexesMonitor.CurrentValue.SupplierNameIndex,
+                    Value = supplierName[..40]
+                });
+            }
+            
+            if (dictionary.TryGetValue("AccommodationName", out var accommodationName))
+            {
+                list.Add(new CustomField
+                {
+                    Index = _fieldsIndexesMonitor.CurrentValue.AccommodationNameIndex,
+                    Value = accommodationName[..40]
+                });
+            }
+            
+            return list;
         }
 
 
