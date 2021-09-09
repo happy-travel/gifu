@@ -13,7 +13,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
                 expiry: DateTime.ParseExact(tokenDetails.TokenExpiryDate, "yyyyMM", CultureInfo.InvariantCulture),
                 holder: string.Empty, // AmEx doesn't return cardholder name
                 code: tokenDetails.TokenSecurityCode,
-                type: CreditCardType.AmericanExpress);
+                type: CreditCardTypes.AmericanExpress);
         }
     }
 }
