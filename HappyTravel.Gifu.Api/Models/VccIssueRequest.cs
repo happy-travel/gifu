@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 using HappyTravel.Money.Models;
 
 namespace HappyTravel.Gifu.Api.Models
