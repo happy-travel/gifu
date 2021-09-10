@@ -58,7 +58,7 @@ namespace HappyTravel.Gifu.Api
             services.AddHealthChecks()
                 .AddDbContextCheck<GifuContext>();
 
-            services.Configure<UserDefinedFieldsIndexes>(Configuration.GetSection("UserDefinedFieldsIndexes"));
+            services.Configure<UserDefinedFieldsOptions>(Configuration.GetSection("UserDefinedFieldsIndexes"));
 
             services
                 .AddProblemDetailsErrorHandling()
