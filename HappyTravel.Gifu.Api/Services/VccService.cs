@@ -265,18 +265,20 @@ namespace HappyTravel.Gifu.Api.Services
 
         private List<CustomField> MapToCustomFieldList(string referenceCode, Dictionary<string, string> dictionary)
         {
+            var fieldsOptions = _fieldOptionsMonitor.CurrentValue;
+            
             var list = new List<CustomField>
             {
                 new()
                 {
-                    Index = _fieldOptionsMonitor.CurrentValue.BookingReferenceCode.Index,
-                    Value = referenceCode[..Math.Min(_fieldOptionsMonitor.CurrentValue.BookingReferenceCode.Length, referenceCode.Length)]
+                    Index = fieldsOptions.BookingReferenceCode.Index,
+                    Value = referenceCode[..Math.Min(fieldsOptions.BookingReferenceCode.Length, referenceCode.Length)]
                 }
             };
 
             foreach (var (key, value) in dictionary)
             {
-                if (_fieldOptionsMonitor.CurrentValue.SpecialValues.TryGetValue(key, out var fieldSettings))
+                if (fieldsOptions.CustomFields.TryGetValue(key, out var fieldSettings))
                 {
                     list.Add(new CustomField
                     {
