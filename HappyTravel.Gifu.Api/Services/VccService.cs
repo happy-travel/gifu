@@ -270,7 +270,7 @@ namespace HappyTravel.Gifu.Api.Services
                 new()
                 {
                     Index = _fieldsIndexesMonitor.CurrentValue.BookingReferenceCodeIndex,
-                    Value = referenceCode[..20]
+                    Value = referenceCode[..Math.Min(20, referenceCode.Length)]
                 }
             };
 
@@ -279,7 +279,7 @@ namespace HappyTravel.Gifu.Api.Services
                 list.Add(new CustomField
                 {
                     Index = _fieldsIndexesMonitor.CurrentValue.SupplierNameIndex,
-                    Value = supplierName[..40]
+                    Value = supplierName[..Math.Min(40, supplierName.Length)]
                 });
             }
             
@@ -288,7 +288,7 @@ namespace HappyTravel.Gifu.Api.Services
                 list.Add(new CustomField
                 {
                     Index = _fieldsIndexesMonitor.CurrentValue.AccommodationNameIndex,
-                    Value = accommodationName[..40]
+                    Value = accommodationName[..Math.Min(40, accommodationName.Length)]
                 });
             }
             
