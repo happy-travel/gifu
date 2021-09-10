@@ -26,13 +26,13 @@ namespace HappyTravel.Gifu.Api.Services
     public class VccService : IVccService
     {
         public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context, IOptions<AmExOptions> options,
-            IOptionsMonitor<UserDefinedFieldsIndexes> fieldsIndexesMonitor)
+            IOptionsMonitor<UserDefinedFieldsOptions> fieldOptionsMonitor)
         {
             _client = client;
             _logger = logger;
             _context = context;
             _options = options.Value;
-            _fieldsIndexesMonitor = fieldsIndexesMonitor;
+            _fieldOptionsMonitor = fieldOptionsMonitor;
         }
         
         
@@ -78,7 +78,7 @@ namespace HappyTravel.Gifu.Api.Services
                 if(!_options.Accounts.TryGetValue(currency, out var accountId))
                     return Result.Failure<(string, string, VirtualCreditCard)>($"Cannot get accountId for currency `{currency}`");
 
-                var fieldsIndexes = _fieldsIndexesMonitor.CurrentValue;
+                var fieldsIndexes = _fieldOptionsMonitor.CurrentValue;
                 
                 var uniqueId = ShortId.Generate(new GenerationOptions
                 {
@@ -101,14 +101,7 @@ namespace HappyTravel.Gifu.Api.Services
                         },
                         ReconciliationFields = new ReconciliationFields
                         {
-                            UserDefinedFieldsGroup = new List<CustomField>
-                            {
-                                new ()
-                                {
-                                    Index = fieldsIndexes.BookingReferenceCodeIndex,
-                                    Value = request.ReferenceCode
-                                }
-                            }
+                            UserDefinedFieldsGroup = MapToCustomFieldList(request.ReferenceCode, request.SpecialValues)
                         }
                     }
                 };
@@ -270,11 +263,39 @@ namespace HappyTravel.Gifu.Api.Services
             return issue ?? Result.Failure<VccIssue>($"VCC with reference code `{referenceCode}` not found");
         }
 
+        private List<CustomField> MapToCustomFieldList(string referenceCode, Dictionary<string, string> dictionary)
+        {
+            var fieldsOptions = _fieldOptionsMonitor.CurrentValue;
+            
+            var list = new List<CustomField>
+            {
+                new()
+                {
+                    Index = fieldsOptions.BookingReferenceCode.Index,
+                    Value = referenceCode[..Math.Min(fieldsOptions.BookingReferenceCode.Length, referenceCode.Length)]
+                }
+            };
+
+            foreach (var (key, value) in dictionary)
+            {
+                if (fieldsOptions.CustomFields.TryGetValue(key, out var fieldSettings))
+                {
+                    list.Add(new CustomField
+                    {
+                        Index = fieldSettings.Index,
+                        Value = value[..Math.Min(fieldSettings.Length, value.Length)]
+                    });
+                }
+            }
+            
+            return list;
+        }
+
 
         private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
         private readonly GifuContext _context;
         private readonly AmExOptions _options;
-        private readonly IOptionsMonitor<UserDefinedFieldsIndexes> _fieldsIndexesMonitor;
+        private readonly IOptionsMonitor<UserDefinedFieldsOptions> _fieldOptionsMonitor;
     }
 }
