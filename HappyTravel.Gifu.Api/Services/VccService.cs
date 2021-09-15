@@ -130,7 +130,7 @@ namespace HappyTravel.Gifu.Api.Services
                     ActivationDate = request.ActivationDate,
                     DueDate = request.DueDate,
                     ClientId = clientId,
-                    CardNumber = TrimCardNumber(result.Value.Vcc.Number)
+                    CardNumber = result.Value.Vcc.Number
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -216,12 +216,15 @@ namespace HappyTravel.Gifu.Api.Services
 
                 var payload = new ModifyRequest
                 {
+                    TokenIdentifier = new TokenIdentifier
+                    {
+                        TokenNumber  = vcc.CardNumber
+                    },
                     TokenIssuanceParams = new ModifyAmountTokenIssuanceParams
                     {
                         BillingAccountId = accountId,
                         TokenDetails = new ModifyAmountTokenDetails
                         {
-                            TokenReferenceId = vcc.UniqueId,
                             TokenAmount = amount.ToAmExFormat()
                         }
                     }
@@ -256,16 +259,6 @@ namespace HappyTravel.Gifu.Api.Services
                 await _context.SaveChangesAsync();
                 return Result.Success();
             }
-        }
-
-
-        private static string TrimCardNumber(string cardNumber)
-        {
-            if (string.IsNullOrEmpty(cardNumber))
-                return cardNumber;
-
-            var cardNumberLength = cardNumber.Length;
-            return cardNumber[^4..].PadLeft(cardNumberLength - 4, '*');
         }
 
 
