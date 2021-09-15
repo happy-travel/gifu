@@ -13,6 +13,7 @@ using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
+using HappyTravel.Money.Enums;
 using HappyTravel.Money.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -64,12 +65,9 @@ namespace HappyTravel.Gifu.Api.Services
 
                 var result = await validator.ValidateAsync(request, cancellationToken);
 
-                if (!result.IsValid)
-                    return Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage)));
-
-                return Enum.TryParse<AmexCurrencies>(request.MoneyAmount.Currency.ToString(), out var currency)
-                    ? currency
-                    : Result.Failure<AmexCurrencies>("Currency is not supported");
+                return !result.IsValid 
+                    ? Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage))) 
+                    : GetAmexCurrency(request.MoneyAmount.Currency);
             }
 
 
@@ -159,9 +157,17 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result> DeleteCard(VccIssue vcc)
             {
+                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
+                if (isFailure)
+                    return Result.Failure(error);
+                
+                if(!_options.Accounts.TryGetValue(currency, out var accountId))
+                    return Result.Failure($"Cannot get accountId for currency `{currency}`");
+                
                 var payload = new DeleteRequest
                 {
-                    TokenReferenceId = vcc.UniqueId
+                    TokenReferenceId = vcc.UniqueId,
+                    BillingAccountId = accountId
                 };
 
                 var (_, response) = await _client.Delete(payload);
@@ -201,10 +207,18 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result<VccIssue>> ModifyCardAmount(VccIssue vcc)
             {
+                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
+                if (isFailure)
+                    return Result.Failure<VccIssue>(error);
+                
+                if(!_options.Accounts.TryGetValue(currency, out var accountId))
+                    return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
+
                 var payload = new ModifyRequest
                 {
                     TokenIssuanceParams = new ModifyAmountTokenIssuanceParams
                     {
+                        BillingAccountId = accountId,
                         TokenDetails = new ModifyAmountTokenDetails
                         {
                             TokenReferenceId = vcc.UniqueId,
@@ -290,6 +304,15 @@ namespace HappyTravel.Gifu.Api.Services
             
             return list;
         }
+
+
+        private static Result<AmexCurrencies> GetAmexCurrency(Currencies currency) 
+            => currency switch
+            {
+                Currencies.USD => AmexCurrencies.USD,
+                Currencies.AED => AmexCurrencies.AED,
+                _ => Result.Failure<AmexCurrencies>("Currency is not supported")
+            };
 
 
         private readonly IAmExClient _client;

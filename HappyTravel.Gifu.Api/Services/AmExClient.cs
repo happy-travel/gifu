@@ -42,7 +42,7 @@ namespace HappyTravel.Gifu.Api.Services
                 Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
             };
             
-            await SignMessage(request);
+            await SignMessage(httpMethod, request);
             
             var response = await _httpClient.SendAsync(request);
             var result = await response.Content.ReadFromJsonAsync<AmexResponse>();
@@ -57,7 +57,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
 
-        private async Task SignMessage(HttpRequestMessage request)
+        private async Task SignMessage(HttpMethod httpMethod, HttpRequestMessage request)
         {
             var authProvider = new HmacAuthProvider();
             var headers = authProvider.GenerateAuthHeaders(clientKey: _options.ClientId, 
@@ -65,7 +65,8 @@ namespace HappyTravel.Gifu.Api.Services
                 payload: request.Content is not null
                     ? await request.Content.ReadAsStringAsync()
                     : null, 
-                requestUrl: request.RequestUri?.ToString());
+                requestUrl: request.RequestUri?.ToString(),
+                httpMethod: httpMethod.Method);
 
             foreach (var (key, value) in headers)
             {

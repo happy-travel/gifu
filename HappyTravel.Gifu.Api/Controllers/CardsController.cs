@@ -62,6 +62,7 @@ namespace HappyTravel.Gifu.Api.Controllers
         /// Modify card amount
         /// </summary>
         [HttpPut("{referenceCode}")]
+        [AllowAnonymous]
         public async Task<IActionResult> ModifyAmount(string referenceCode, [FromBody] MoneyAmount amount)
         {
             var (isSuccess, _, error) = await _vccService.ModifyAmount(referenceCode, amount);
