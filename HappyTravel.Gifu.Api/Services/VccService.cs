@@ -141,12 +141,20 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
 
-        public Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken) 
-            => _context.VccIssues
+        public async Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken)
+        {
+            var records = await _context.VccIssues
                 .Where(c => referenceCodes.Contains(c.ReferenceCode))
                 .ToListAsync(cancellationToken);
 
-        
+            return records.Select(r =>
+            {
+                r.CardNumber = TrimCardNumber(r.CardNumber);
+                return r;
+            }).ToList();
+        }
+
+
         public async Task<Result> Delete(string referenceCode)
         {
             _logger.LogVccDeleteRequestStarted(referenceCode);
@@ -261,6 +269,16 @@ namespace HappyTravel.Gifu.Api.Services
             }
         }
 
+        
+        private static string TrimCardNumber(string cardNumber)
+        {
+            if (string.IsNullOrEmpty(cardNumber))
+                return cardNumber;
+
+            var cardNumberLength = cardNumber.Length;
+            return cardNumber[^4..].PadLeft(cardNumberLength - 4, '*');
+        }
+        
 
         private async Task<Result<VccIssue>> GetVcc(string referenceCode)
         {
