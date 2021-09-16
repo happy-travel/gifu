@@ -6,5 +6,8 @@ namespace HappyTravel.Gifu.Api.Models.AmEx.Request
     {
         [JsonPropertyName("token_reference_id")]
         public string TokenReferenceId { get; init; }
+        
+        [JsonPropertyName("billing_account_id")]
+        public string BillingAccountId { get; init; }
     }
 }

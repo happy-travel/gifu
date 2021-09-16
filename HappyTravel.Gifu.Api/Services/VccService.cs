@@ -13,6 +13,7 @@ using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
+using HappyTravel.Money.Enums;
 using HappyTravel.Money.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -64,12 +65,9 @@ namespace HappyTravel.Gifu.Api.Services
 
                 var result = await validator.ValidateAsync(request, cancellationToken);
 
-                if (!result.IsValid)
-                    return Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage)));
-
-                return Enum.TryParse<AmexCurrencies>(request.MoneyAmount.Currency.ToString(), out var currency)
-                    ? currency
-                    : Result.Failure<AmexCurrencies>("Currency is not supported");
+                return !result.IsValid 
+                    ? Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage))) 
+                    : GetAmexCurrency(request.MoneyAmount.Currency);
             }
 
 
@@ -132,7 +130,7 @@ namespace HappyTravel.Gifu.Api.Services
                     ActivationDate = request.ActivationDate,
                     DueDate = request.DueDate,
                     ClientId = clientId,
-                    CardNumber = TrimCardNumber(result.Value.Vcc.Number)
+                    CardNumber = result.Value.Vcc.Number
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -143,12 +141,20 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
 
-        public Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken) 
-            => _context.VccIssues
+        public async Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken)
+        {
+            var records = await _context.VccIssues
                 .Where(c => referenceCodes.Contains(c.ReferenceCode))
                 .ToListAsync(cancellationToken);
 
-        
+            return records.Select(r =>
+            {
+                r.CardNumber = TrimCardNumber(r.CardNumber);
+                return r;
+            }).ToList();
+        }
+
+
         public async Task<Result> Delete(string referenceCode)
         {
             _logger.LogVccDeleteRequestStarted(referenceCode);
@@ -159,9 +165,17 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result> DeleteCard(VccIssue vcc)
             {
+                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
+                if (isFailure)
+                    return Result.Failure(error);
+                
+                if(!_options.Accounts.TryGetValue(currency, out var accountId))
+                    return Result.Failure($"Cannot get accountId for currency `{currency}`");
+                
                 var payload = new DeleteRequest
                 {
-                    TokenReferenceId = vcc.UniqueId
+                    TokenReferenceId = vcc.UniqueId,
+                    BillingAccountId = accountId
                 };
 
                 var (_, response) = await _client.Delete(payload);
@@ -201,13 +215,24 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result<VccIssue>> ModifyCardAmount(VccIssue vcc)
             {
+                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
+                if (isFailure)
+                    return Result.Failure<VccIssue>(error);
+                
+                if(!_options.Accounts.TryGetValue(currency, out var accountId))
+                    return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
+
                 var payload = new ModifyRequest
                 {
+                    TokenIdentifier = new TokenIdentifier
+                    {
+                        TokenNumber  = vcc.CardNumber
+                    },
                     TokenIssuanceParams = new ModifyAmountTokenIssuanceParams
                     {
+                        BillingAccountId = accountId,
                         TokenDetails = new ModifyAmountTokenDetails
                         {
-                            TokenReferenceId = vcc.UniqueId,
                             TokenAmount = amount.ToAmExFormat()
                         }
                     }
@@ -244,7 +269,7 @@ namespace HappyTravel.Gifu.Api.Services
             }
         }
 
-
+        
         private static string TrimCardNumber(string cardNumber)
         {
             if (string.IsNullOrEmpty(cardNumber))
@@ -253,7 +278,7 @@ namespace HappyTravel.Gifu.Api.Services
             var cardNumberLength = cardNumber.Length;
             return cardNumber[^4..].PadLeft(cardNumberLength - 4, '*');
         }
-
+        
 
         private async Task<Result<VccIssue>> GetVcc(string referenceCode)
         {
@@ -290,6 +315,15 @@ namespace HappyTravel.Gifu.Api.Services
             
             return list;
         }
+
+
+        private static Result<AmexCurrencies> GetAmexCurrency(Currencies currency) 
+            => currency switch
+            {
+                Currencies.USD => AmexCurrencies.USD,
+                Currencies.AED => AmexCurrencies.AED,
+                _ => Result.Failure<AmexCurrencies>("Currency is not supported")
+            };
 
 
         private readonly IAmExClient _client;
