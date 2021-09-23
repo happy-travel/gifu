@@ -14,5 +14,7 @@ namespace HappyTravel.Gifu.Data.Models
         public DateTime DueDate { get; set; }
         public string ClientId { get; set; } = string.Empty;
         public string CardNumber { get; set; } = string.Empty;
+        public DateTime Created { get; set; }
+        public DateTime Modified { get; set; }
     }
 }
