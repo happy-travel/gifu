@@ -119,6 +119,8 @@ namespace HappyTravel.Gifu.Api.Services
                     _logger.LogVccIssueRequestFailure(request.ReferenceCode, result.Error);
                     return Result.Failure<VirtualCreditCard>($"Error creating VCC for reference code `{request.ReferenceCode}`");
                 }
+
+                var now = DateTime.UtcNow;
                 
                 _context.VccIssues.Add(new VccIssue
                 {
@@ -130,7 +132,9 @@ namespace HappyTravel.Gifu.Api.Services
                     ActivationDate = request.ActivationDate,
                     DueDate = request.DueDate,
                     ClientId = clientId,
-                    CardNumber = result.Value.Vcc.Number
+                    CardNumber = result.Value.Vcc.Number,
+                    Created = now,
+                    Modified = now
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -160,17 +164,18 @@ namespace HappyTravel.Gifu.Api.Services
             _logger.LogVccDeleteRequestStarted(referenceCode);
 
             return await GetVcc(referenceCode)
-                .Bind(DeleteCard);
+                .Bind(DeleteCard)
+                .Bind(Save);
 
 
-            async Task<Result> DeleteCard(VccIssue vcc)
+            async Task<Result<VccIssue>> DeleteCard(VccIssue vcc)
             {
                 var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
                 if (isFailure)
-                    return Result.Failure(error);
+                    return Result.Failure<VccIssue>(error);
                 
                 if(!_options.Accounts.TryGetValue(currency, out var accountId))
-                    return Result.Failure($"Cannot get accountId for currency `{currency}`");
+                    return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
                 
                 var payload = new DeleteRequest
                 {
@@ -183,11 +188,19 @@ namespace HappyTravel.Gifu.Api.Services
                 if (response.Status.ShortMessage == "success")
                 {
                     _logger.LogVccDeleteRequestSuccess(referenceCode);
-                    return Result.Success();
+                    return vcc;
                 }
                 
                 _logger.LogVccDeleteRequestFailure(referenceCode, response.Status.DetailedMessage);
-                return Result.Failure($"Deleting VCC for `{referenceCode}` failed");
+                return Result.Failure<VccIssue>($"Deleting VCC for `{referenceCode}` failed");
+            }
+            
+            
+            async Task<Result> Save(VccIssue vcc)
+            {
+                vcc.Modified = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return Result.Success();
             }
         }
 
@@ -255,6 +268,7 @@ namespace HappyTravel.Gifu.Api.Services
             {
                 var amountBefore = vcc.Amount;
                 vcc.Amount = amount.Amount;
+                vcc.Modified = DateTime.UtcNow;
                 
                 _context.AmountChangesHistories.Add(new AmountChangesHistory
                 {
