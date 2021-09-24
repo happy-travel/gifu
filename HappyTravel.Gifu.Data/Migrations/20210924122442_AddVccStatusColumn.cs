@@ -12,6 +12,8 @@ namespace HappyTravel.Gifu.Data.Migrations
                 type: "integer",
                 nullable: false,
                 defaultValue: 0);
+
+            migrationBuilder.Sql(@"UPDATE ""VccIssues"" SET ""Status"" = 1");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
