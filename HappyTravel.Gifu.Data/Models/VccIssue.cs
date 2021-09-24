@@ -16,5 +16,6 @@ namespace HappyTravel.Gifu.Data.Models
         public string CardNumber { get; set; } = string.Empty;
         public DateTime Created { get; set; }
         public DateTime Modified { get; set; }
+        public VccStatuses Status { get; set; }
     }
 }

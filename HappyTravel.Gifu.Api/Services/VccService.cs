@@ -59,7 +59,7 @@ namespace HappyTravel.Gifu.Api.Services
                     .MustAsync(async (referenceCode, token) =>
                     {
                         return !await _context.VccIssues
-                            .AnyAsync(vcc => vcc.ReferenceCode == referenceCode, token);
+                            .AnyAsync(vcc => vcc.ReferenceCode == referenceCode && vcc.Status == VccStatuses.Issued, token);
                     })
                     .WithMessage($"VCC for '{request.ReferenceCode}' already issued");
 
@@ -134,7 +134,8 @@ namespace HappyTravel.Gifu.Api.Services
                     ClientId = clientId,
                     CardNumber = result.Value.Vcc.Number,
                     Created = now,
-                    Modified = now
+                    Modified = now,
+                    Status = VccStatuses.Issued
                 });
                 
                 await _context.SaveChangesAsync(cancellationToken);
@@ -148,7 +149,7 @@ namespace HappyTravel.Gifu.Api.Services
         public async Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken)
         {
             var records = await _context.VccIssues
-                .Where(c => referenceCodes.Contains(c.ReferenceCode))
+                .Where(c => referenceCodes.Contains(c.ReferenceCode) && c.Status == VccStatuses.Issued)
                 .ToListAsync(cancellationToken);
 
             return records.Select(r =>
@@ -199,6 +200,8 @@ namespace HappyTravel.Gifu.Api.Services
             async Task<Result> Save(VccIssue vcc)
             {
                 vcc.Modified = DateTime.UtcNow;
+                vcc.Status = VccStatuses.Deleted;
+                _context.Update(vcc);
                 await _context.SaveChangesAsync();
                 return Result.Success();
             }
@@ -278,6 +281,7 @@ namespace HappyTravel.Gifu.Api.Services
                     Date = DateTime.UtcNow
                 });
 
+                _context.Update(vcc);
                 await _context.SaveChangesAsync();
                 return Result.Success();
             }
@@ -297,6 +301,7 @@ namespace HappyTravel.Gifu.Api.Services
         private async Task<Result<VccIssue>> GetVcc(string referenceCode)
         {
             var issue = await _context.VccIssues
+                .Where(i => i.Status == VccStatuses.Issued)
                 .SingleOrDefaultAsync(i => i.ReferenceCode == referenceCode);
 
             return issue ?? Result.Failure<VccIssue>($"VCC with reference code `{referenceCode}` not found");
