@@ -47,6 +47,10 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
                 new EventId(81032, "VccModifyAmountRequestSuccess"),
                 "Modifying VCC amount for '{ReferenceCode}' completed successfully. New value: {amount}");
             
+            ResponseDeserializationFailed = LoggerMessage.Define<string>(LogLevel.Error,
+                new EventId(81040, "ResponseDeserializationFailed"),
+                "Response deserialization failed: {Response}");
+            
         }
     
                 
@@ -79,6 +83,9 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
                 
          public static void LogVccModifyAmountRequestSuccess(this ILogger logger, string ReferenceCode, decimal amount, Exception exception = null)
             => VccModifyAmountRequestSuccess(logger, ReferenceCode, amount, exception);
+                
+         public static void LogResponseDeserializationFailed(this ILogger logger, string Response, Exception exception = null)
+            => ResponseDeserializationFailed(logger, Response, exception);
     
     
         
@@ -101,5 +108,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
         private static readonly Action<ILogger, string, string, Exception> VccModifyAmountRequestFailure;
         
         private static readonly Action<ILogger, string, decimal, Exception> VccModifyAmountRequestSuccess;
+        
+        private static readonly Action<ILogger, string, Exception> ResponseDeserializationFailed;
     }
 }

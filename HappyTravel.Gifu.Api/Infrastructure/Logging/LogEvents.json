@@ -8,5 +8,6 @@
     {"Id": 81022, "name": "VccDeleteRequestSuccess", "level": "Information", "template": "Deleting VCC for '{ReferenceCode}' completed successfully", "argumentTypes": ["string"]},
     {"Id": 81030, "name": "VccModifyAmountRequestStarted", "level": "Information", "template": "Modifying VCC amount for '{ReferenceCode}'. New value: {amount}", "argumentTypes": ["string", "decimal"]},
     {"Id": 81031, "name": "VccModifyAmountRequestFailure", "level": "Error", "template": "Modifying VCC amount for '{ReferenceCode}' failed. '{Error}'", "argumentTypes": ["string", "string"]},
-    {"Id": 81032, "name": "VccModifyAmountRequestSuccess", "level": "Information", "template": "Modifying VCC amount for '{ReferenceCode}' completed successfully. New value: {amount}", "argumentTypes": ["string", "decimal"]}
+    {"Id": 81032, "name": "VccModifyAmountRequestSuccess", "level": "Information", "template": "Modifying VCC amount for '{ReferenceCode}' completed successfully. New value: {amount}", "argumentTypes": ["string", "decimal"]},
+    {"id": 81040, "name": "ResponseDeserializationFailed", "level": "Error", "template": "Response deserialization failed: {Response}", "argumentTypes":  ["string"]}
 ]
