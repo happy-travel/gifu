@@ -76,8 +76,6 @@ namespace HappyTravel.Gifu.Api.Services
                 if(!_options.Accounts.TryGetValue(currency, out var accountId))
                     return Result.Failure<(string, string, VirtualCreditCard)>($"Cannot get accountId for currency `{currency}`");
 
-                var fieldsIndexes = _fieldOptionsMonitor.CurrentValue;
-                
                 var uniqueId = ShortId.Generate(new GenerationOptions
                 {
                     UseNumbers = true,
@@ -104,11 +102,13 @@ namespace HappyTravel.Gifu.Api.Services
                     }
                 };
                 
-                var (transactionId, response) = await _client.CreateToken(payload);
-                
-                return response.Status.ShortMessage != "success" 
-                    ? Result.Failure<(string, string, VirtualCreditCard)>(response.Status.DetailedMessage) 
-                    : (transactionId, uniqueId, response.TokenIssuanceData.TokenDetails.ToVirtualCreditCard());
+                var (isSuccess, _, (transactionId, response), err) = await _client.CreateToken(payload);
+
+                return isSuccess && response.Status.ShortMessage == "success"
+                    ? (transactionId, uniqueId, response.TokenIssuanceData.TokenDetails.ToVirtualCreditCard())
+                    : Result.Failure<(string, string, VirtualCreditCard)>(isSuccess 
+                        ? response.Status.DetailedMessage
+                        : err);
             }
 
             
@@ -184,15 +184,17 @@ namespace HappyTravel.Gifu.Api.Services
                     BillingAccountId = accountId
                 };
 
-                var (_, response) = await _client.Delete(payload);
-
-                if (response.Status.ShortMessage == "success")
+                var (isSuccess, _, result, err) = await _client.Delete(payload);
+                if (isSuccess && result.Response.Status.ShortMessage == "success")
                 {
                     _logger.LogVccDeleteRequestSuccess(referenceCode);
                     return vcc;
                 }
                 
-                _logger.LogVccDeleteRequestFailure(referenceCode, response.Status.DetailedMessage);
+                _logger.LogVccDeleteRequestFailure(referenceCode, isSuccess 
+                    ? result.Response.Status.DetailedMessage
+                    : err);
+                
                 return Result.Failure<VccIssue>($"Deleting VCC for `{referenceCode}` failed");
             }
             
@@ -254,15 +256,18 @@ namespace HappyTravel.Gifu.Api.Services
                     }
                 };
                 
-                var (_, response) = await _client.ModifyAmount(payload);
+                var (isSuccess, _, result, err) = await _client.ModifyAmount(payload);
 
-                if (response.Status.ShortMessage == "success")
+                if (isSuccess && result.Response.Status.ShortMessage == "success")
                 {
                     _logger.LogVccModifyAmountRequestSuccess(referenceCode, amount.Amount);
                     return vcc;
                 }
                 
-                _logger.LogVccModifyAmountRequestFailure(referenceCode, response.Status.DetailedMessage);
+                _logger.LogVccModifyAmountRequestFailure(referenceCode, isSuccess 
+                    ? result.Response.Status.DetailedMessage
+                    : err);
+                
                 return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
             }
 

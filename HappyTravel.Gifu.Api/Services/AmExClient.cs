@@ -1,40 +1,45 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Amex.Api.Client.Core.Security.Authentication;
 using CSharpFunctionalExtensions;
+using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace HappyTravel.Gifu.Api.Services
 {
     public class AmExClient : IAmExClient
     {
-        public AmExClient(HttpClient httpClient, IOptions<AmExOptions> options)
+        public AmExClient(HttpClient httpClient, IOptions<AmExOptions> options, ILogger<AmExClient> logger)
         {
             _httpClient = httpClient;
             _options = options.Value;
+            _logger = logger;
         }
         
         
-        public Task<(string TransactionId, AmexResponse Response)> CreateToken(CreateTokenRequest payload) 
+        public Task<Result<(string TransactionId, AmexResponse Response)>> CreateToken(CreateTokenRequest payload) 
             => SendRequest(HttpMethod.Post, payload);
 
 
-        public Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload) 
+        public Task<Result<(string TransactionId, AmexResponse Response)>> Delete(DeleteRequest payload) 
             => SendRequest(HttpMethod.Delete, payload);
 
 
-        public Task<(string TransactionId, AmexResponse Response)> ModifyAmount(ModifyRequest payload)
+        public Task<Result<(string TransactionId, AmexResponse Response)>> ModifyAmount(ModifyRequest payload)
             => SendRequest(HttpMethod.Put, payload);
 
 
-        private async Task<(string TransactionId, AmexResponse Response)> SendRequest<T>(HttpMethod httpMethod, T payload)
+        private async Task<Result<(string TransactionId, AmexResponse Response)>> SendRequest<T>(HttpMethod httpMethod, T payload)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
             var request = new HttpRequestMessage(httpMethod, endpoint)
@@ -45,15 +50,24 @@ namespace HappyTravel.Gifu.Api.Services
             await SignMessage(httpMethod, request);
             
             var response = await _httpClient.SendAsync(request);
-            var result = await response.Content.ReadFromJsonAsync<AmexResponse>();
-            var transactionId = string.Empty;
-            
-            if (response.Headers.TryGetValues("transaction_id", out var values))
+            try
             {
-                transactionId = values.Single();
+                var result = await response.Content.ReadFromJsonAsync<AmexResponse>();
+                var transactionId = string.Empty;
+
+                if (response.Headers.TryGetValues("transaction_id", out var values))
+                {
+                    transactionId = values.Single();
+                }
+
+                return (transactionId, result);
             }
-            
-            return (transactionId, result);
+            catch (JsonReaderException ex)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+                _logger.LogResponseDeserializationFailed(responseBody, ex);
+                return Result.Failure<(string TransactionId, AmexResponse Response)>("Response deserialization failed");
+            }
         }
 
 
@@ -77,5 +91,6 @@ namespace HappyTravel.Gifu.Api.Services
 
         private readonly HttpClient _httpClient;
         private readonly AmExOptions _options;
+        private readonly ILogger<AmExClient> _logger;
     }
 }

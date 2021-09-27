@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
 
@@ -10,7 +11,7 @@ namespace HappyTravel.Gifu.Api.Services
     /// </summary>
     public class FakeAmexClient : IAmExClient
     {
-        public Task<(string TransactionId, AmexResponse Response)> CreateToken(CreateTokenRequest payload)
+        public async Task<Result<(string TransactionId, AmexResponse Response)>> CreateToken(CreateTokenRequest payload)
         {
             var transactionId = Guid.NewGuid().ToString();
             var response = new AmexResponse()
@@ -26,15 +27,15 @@ namespace HappyTravel.Gifu.Api.Services
                     }
                 }
             };
-            return Task.FromResult((transactionId, response));
+            return await Task.FromResult((transactionId, response));
         }
 
         
-        public Task<(string TransactionId, AmexResponse Response)> Delete(DeleteRequest payload) 
-            => Task.FromResult((string.Empty, new AmexResponse()));
+        public async Task<Result<(string TransactionId, AmexResponse Response)>> Delete(DeleteRequest payload) 
+            => await Task.FromResult((string.Empty, new AmexResponse()));
 
         
-        public Task<(string TransactionId, AmexResponse Response)> ModifyAmount(ModifyRequest payload) 
-            => Task.FromResult((string.Empty, new AmexResponse()));
+        public async Task<Result<(string TransactionId, AmexResponse Response)>> ModifyAmount(ModifyRequest payload) 
+            => await Task.FromResult((string.Empty, new AmexResponse()));
     }
 }
