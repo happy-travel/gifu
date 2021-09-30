@@ -11,8 +11,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
         public static string ToAmExFormat(this MoneyAmount moneyAmount)
         {
             moneyAmount = MoneyRounder.Ceil(moneyAmount);
-            var amount = moneyAmount.Amount * (int) Math.Pow(10, moneyAmount.Currency.GetDecimalDigitsCount());
-            return ((int)amount).ToString(CultureInfo.InvariantCulture);
+            return moneyAmount.ToFractionalUnits().ToString(CultureInfo.InvariantCulture);
         }
     }
 }
