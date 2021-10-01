@@ -22,7 +22,7 @@ namespace HappyTravel.Gifu.Data
 
             modelBuilder.Entity<AmountChangesHistory>(b =>
             {
-                b.HasKey(h => h.VccId);
+                b.HasKey(h => h.Id);
             });
         }
     }
