@@ -27,19 +27,19 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public Task<Result<(string TransactionId, AmexResponse Response)>> CreateToken(CreateTokenRequest payload) 
+        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> CreateToken(CreateTokenRequest payload) 
             => SendRequest(HttpMethod.Post, payload);
 
 
-        public Task<Result<(string TransactionId, AmexResponse Response)>> Delete(DeleteRequest payload) 
+        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Delete(DeleteRequest payload) 
             => SendRequest(HttpMethod.Delete, payload);
 
 
-        public Task<Result<(string TransactionId, AmexResponse Response)>> Edit(ModifyRequest payload)
+        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Edit(ModifyRequest payload)
             => SendRequest(HttpMethod.Put, payload);
 
 
-        private async Task<Result<(string TransactionId, AmexResponse Response)>> SendRequest<T>(HttpMethod httpMethod, T payload)
+        private async Task<Result<(string TransactionId, TokenIssuanceData Response)>> SendRequest<T>(HttpMethod httpMethod, T payload)
         {
             var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
             var request = new HttpRequestMessage(httpMethod, endpoint)
@@ -60,13 +60,15 @@ namespace HappyTravel.Gifu.Api.Services
                     transactionId = values.Single();
                 }
 
-                return (transactionId, result);
+                return result.Status.ShortMessage == "success"
+                    ? (transactionId, result.TokenIssuanceData)
+                    : Result.Failure<(string TransactionId, TokenIssuanceData Response)>(result.Status.DetailedMessage);
             }
             catch (JsonReaderException ex)
             {
                 var responseBody = await response.Content.ReadAsStringAsync();
                 _logger.LogResponseDeserializationFailed(responseBody, ex);
-                return Result.Failure<(string TransactionId, AmexResponse Response)>("Response deserialization failed");
+                return Result.Failure<(string TransactionId, TokenIssuanceData Response)>("Response deserialization failed");
             }
         }
 

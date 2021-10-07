@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
@@ -9,33 +8,27 @@ using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
+using HappyTravel.Gifu.Api.Infrastructure.Utils;
 using HappyTravel.Gifu.Api.Models;
-using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
-using HappyTravel.Money.Enums;
-using HappyTravel.Money.Extensions;
 using HappyTravel.Money.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using shortid;
-using shortid.Configuration;
-using TokenDetails = HappyTravel.Gifu.Api.Models.AmEx.Request.TokenDetails;
 
 namespace HappyTravel.Gifu.Api.Services
 {
     public class VccService : IVccService
     {
-        public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context, IOptions<AmExOptions> options,
-            IOptionsMonitor<UserDefinedFieldsOptions> fieldOptionsMonitor, IOptionsMonitor<DirectEditOptions> directEditOptionsMonitor)
+        public VccService(IAmExClient client, ILogger<VccService> logger, IVccIssueRecordsManager vccRecordsManager, IOptions<AmExOptions> options,
+            ICustomFieldsMapper customFieldsMapper, IOptionsMonitor<DirectEditOptions> directEditOptionsMonitor)
         {
             _client = client;
             _logger = logger;
-            _context = context;
+            _vccRecordsManager = vccRecordsManager;
             _options = options.Value;
-            _fieldOptionsMonitor = fieldOptionsMonitor;
+            _customFieldsMapper = customFieldsMapper;
             _directEditOptionsMonitor = directEditOptionsMonitor;
         }
         
@@ -49,7 +42,7 @@ namespace HappyTravel.Gifu.Api.Services
                 .Finally(SaveResult);
 
 
-            async Task<Result<AmexCurrencies>> ValidateRequest()
+            async Task<Result> ValidateRequest()
             {
                 var validator = new InlineValidator<VccIssueRequest>();
                 var today = DateTime.UtcNow.Date;
@@ -59,59 +52,32 @@ namespace HappyTravel.Gifu.Api.Services
                 validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
                 validator.RuleFor(r => r.ReferenceCode)
                     .NotEmpty()
-                    .MustAsync(async (referenceCode, token) =>
-                    {
-                        return !await _context.VccIssues
-                            .AnyAsync(vcc => vcc.ReferenceCode == referenceCode && vcc.Status == VccStatuses.Issued, token);
-                    })
+                    .MustAsync(async (referenceCode, _) => !await _vccRecordsManager.IsIssued(referenceCode))
                     .WithMessage($"VCC for '{request.ReferenceCode}' already issued");
 
                 var result = await validator.ValidateAsync(request, cancellationToken);
 
-                return !result.IsValid 
-                    ? Result.Failure<AmexCurrencies>(string.Join(";", result.Errors.Select(e => e.ErrorMessage))) 
-                    : GetAmexCurrency(request.MoneyAmount.Currency);
+                return result.IsValid
+                    ? Result.Success()
+                    : Result.Failure(result.ToString(";"));
             }
 
 
-            async Task<Result<(string, string, VirtualCreditCard)>> CreateCard(AmexCurrencies currency)
+            async Task<Result<(string, string, VirtualCreditCard)>> CreateCard()
             {
-                if(!_options.Accounts.TryGetValue(currency, out var accountId))
-                    return Result.Failure<(string, string, VirtualCreditCard)>($"Cannot get accountId for currency `{currency}`");
-
-                var uniqueId = ShortId.Generate(new GenerationOptions
-                {
-                    UseNumbers = true,
-                    UseSpecialCharacters = false,
-                    Length = 15
-                });
-                
-                var payload = new CreateTokenRequest
-                {
-                    TokenIssuanceParams = new TokenIssuanceParams
-                    {
-                        BillingAccountId = accountId,
-                        TokenDetails = new TokenDetails
-                        {
-                            TokenReferenceId = uniqueId,
-                            TokenAmount = request.MoneyAmount.ToAmExFormat(),
-                            TokenStartDate = request.ActivationDate.ToAmExFormat(),
-                            TokenEndDate = request.DueDate.ToAmExFormat()
-                        },
-                        ReconciliationFields = new ReconciliationFields
-                        {
-                            UserDefinedFieldsGroup = MapToCustomFieldList(request.ReferenceCode, request.SpecialValues)
-                        }
-                    }
-                };
+                var uniqueId = UniqueIdGenerator.Get();
+                var payload = RequestGenerator.CreateTokenRequest(uniqueId: uniqueId,
+                    accountId: _options.Accounts[request.MoneyAmount.Currency],
+                    amount: request.MoneyAmount,
+                    startDate: request.ActivationDate,
+                    endDate: request.DueDate,
+                    customFields: _customFieldsMapper.Map(request.ReferenceCode, request.SpecialValues));
                 
                 var (isSuccess, _, (transactionId, response), err) = await _client.CreateToken(payload);
 
-                return isSuccess && response.Status.ShortMessage == "success"
-                    ? (transactionId, uniqueId, response.TokenIssuanceData.TokenDetails.ToVirtualCreditCard())
-                    : Result.Failure<(string, string, VirtualCreditCard)>(isSuccess 
-                        ? response.Status.DetailedMessage
-                        : err);
+                return isSuccess
+                    ? (transactionId, uniqueId, response.TokenDetails.ToVirtualCreditCard())
+                    : Result.Failure<(string, string, VirtualCreditCard)>(err);
             }
 
             
@@ -125,7 +91,7 @@ namespace HappyTravel.Gifu.Api.Services
 
                 var now = DateTime.UtcNow;
                 
-                _context.VccIssues.Add(new VccIssue
+                await _vccRecordsManager.Add(new VccIssue
                 {
                     TransactionId = result.Value.TransactionId,
                     UniqueId = result.Value.UniqueId,
@@ -141,86 +107,58 @@ namespace HappyTravel.Gifu.Api.Services
                     Status = VccStatuses.Issued
                 });
                 
-                await _context.SaveChangesAsync(cancellationToken);
                 _logger.LogVccIssueRequestSuccess(request.ReferenceCode, result.Value.UniqueId);
-                
                 return result.Value.Vcc;
             }
         }
 
 
-        public async Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken)
-        {
-            var records = await _context.VccIssues
-                .Where(c => referenceCodes.Contains(c.ReferenceCode) && c.Status == VccStatuses.Issued)
-                .ToListAsync(cancellationToken);
-
-            return records.Select(r =>
-            {
-                r.CardNumber = TrimCardNumber(r.CardNumber);
-                return r;
-            }).ToList();
-        }
+        public async Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken) 
+            => (await _vccRecordsManager.Get(referenceCodes)).TrimCardNumbers().ToList();
 
 
         public async Task<Result> Delete(string referenceCode)
         {
             _logger.LogVccDeleteRequestStarted(referenceCode);
 
-            return await GetVcc(referenceCode)
+            return await _vccRecordsManager.Get(referenceCode)
                 .Bind(DeleteCard)
-                .Bind(Save);
+                .Map(Save);
 
 
             async Task<Result<VccIssue>> DeleteCard(VccIssue vcc)
             {
-                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
-                if (isFailure)
-                    return Result.Failure<VccIssue>(error);
-                
-                if(!_options.Accounts.TryGetValue(currency, out var accountId))
-                    return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
-                
                 var payload = new DeleteRequest
                 {
                     TokenReferenceId = vcc.UniqueId,
-                    BillingAccountId = accountId
+                    BillingAccountId = _options.Accounts[vcc.Currency]
                 };
 
-                var (isSuccess, _, result, err) = await _client.Delete(payload);
-                if (isSuccess && result.Response.Status.ShortMessage == "success")
+                var (isSuccess, _, _, err) = await _client.Delete(payload);
+                if (isSuccess)
                 {
                     _logger.LogVccDeleteRequestSuccess(referenceCode);
                     return vcc;
                 }
                 
-                _logger.LogVccDeleteRequestFailure(referenceCode, isSuccess 
-                    ? result.Response.Status.DetailedMessage
-                    : err);
-                
+                _logger.LogVccDeleteRequestFailure(referenceCode, err);
                 return Result.Failure<VccIssue>($"Deleting VCC for `{referenceCode}` failed");
             }
-            
-            
-            async Task<Result> Save(VccIssue vcc)
-            {
-                vcc.Modified = DateTime.UtcNow;
-                vcc.Status = VccStatuses.Deleted;
-                _context.Update(vcc);
-                await _context.SaveChangesAsync();
-                return Result.Success();
-            }
+
+
+            Task Save(VccIssue vcc)
+                => _vccRecordsManager.Delete(vcc);
         }
 
         
-        public Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount)
+        public async Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount)
         {
             _logger.LogVccModifyAmountRequestStarted(referenceCode, amount.Amount);
             
-            return GetVcc(referenceCode)
+            return await _vccRecordsManager.Get(referenceCode)
                 .Bind(ValidateRequest)
                 .Bind(ModifyCardAmount)
-                .Bind(SaveHistory);
+                .Map(SaveHistory);
             
             
             Result<VccIssue> ValidateRequest(VccIssue vcc)
@@ -237,63 +175,37 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result<VccIssue>> ModifyCardAmount(VccIssue vcc)
             {
-                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
-                if (isFailure)
-                    return Result.Failure<VccIssue>(error);
-                
-                if(!_options.Accounts.TryGetValue(currency, out var accountId))
-                    return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
-
-                var payload = CreateModifyRequest(tokenNumber: vcc.CardNumber,
-                    accountId: accountId,
-                    tokenAmount: amount.ToAmExFormat(),
+                var payload = RequestGenerator.CreateModifyRequest(tokenNumber: vcc.CardNumber,
+                    accountId: _options.Accounts[vcc.Currency],
+                    tokenAmount: amount,
                     tokenStartDate: null,
                     tokenDueDate: null);
                 
-                var (isSuccess, _, result, err) = await _client.Edit(payload);
+                var (isSuccess, _, _, err) = await _client.Edit(payload);
 
-                if (isSuccess && result.Response.Status.ShortMessage == "success")
+                if (isSuccess)
                 {
                     _logger.LogVccModifyAmountRequestSuccess(referenceCode, amount.Amount);
                     return vcc;
                 }
                 
-                _logger.LogVccModifyAmountRequestFailure(referenceCode, isSuccess 
-                    ? result.Response.Status.DetailedMessage
-                    : err);
-                
+                _logger.LogVccModifyAmountRequestFailure(referenceCode, err);
                 return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
             }
 
 
-            async Task<Result> SaveHistory(VccIssue vcc)
-            {
-                var amountBefore = vcc.Amount;
-                vcc.Amount = amount.Amount;
-                vcc.Modified = DateTime.UtcNow;
-                
-                _context.AmountChangesHistories.Add(new AmountChangesHistory
-                {
-                    VccId = vcc.UniqueId,
-                    AmountAfter = amount.Amount,
-                    AmountBefore = amountBefore,
-                    Date = DateTime.UtcNow
-                });
-
-                _context.Update(vcc);
-                await _context.SaveChangesAsync();
-                return Result.Success();
-            }
+            Task SaveHistory(VccIssue vcc)
+                => _vccRecordsManager.ModifyAmount(vcc, amount.Amount);
         }
         
         
         public async Task<Result> Edit(string referenceCode, VccEditRequest request, string clientId)
         {
             return await IsDirectEditEnabled()
-                .Bind(() => GetVcc(referenceCode))
+                .Bind(() => _vccRecordsManager.Get(referenceCode))
                 .Bind(Validate)
                 .Bind(EditCard)
-                .Bind(SaveRequest);
+                .Map(SaveRequest);
 
 
             Result IsDirectEditEnabled()
@@ -320,147 +232,35 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result<VccIssue>> EditCard(VccIssue vcc)
             {
-                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
-                if (isFailure)
-                    return Result.Failure<VccIssue>(error);
-                
-                if (!_options.Accounts.TryGetValue(currency, out var accountId))
-                    return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
-                
-                var payload = CreateModifyRequest(tokenNumber: vcc.CardNumber,
-                    accountId: accountId,
-                    tokenAmount: request.MoneyAmount?.ToAmExFormat(),
-                    tokenStartDate: request.ActivationDate?.ToAmExFormat(),
-                    tokenDueDate: request.DueDate?.ToAmExFormat());
+                var payload = RequestGenerator.CreateModifyRequest(tokenNumber: vcc.CardNumber,
+                    accountId: _options.Accounts[vcc.Currency],
+                    tokenAmount: request.MoneyAmount,
+                    tokenStartDate: request.ActivationDate,
+                    tokenDueDate: request.DueDate);
 
-                var (isSuccess, _, result, err) = await _client.Edit(payload);
+                var (isSuccess, _, _, err) = await _client.Edit(payload);
 
-                if (isSuccess && result.Response.Status.ShortMessage == "success")
+                if (isSuccess)
                 {
                     _logger.LogVccEditSuccess(referenceCode);
                     return vcc;
                 }
                 
-                _logger.LogVccEditFailure(referenceCode, isSuccess 
-                    ? result.Response.Status.DetailedMessage
-                    : err);
+                _logger.LogVccEditFailure(referenceCode, err);
                 return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
             }
 
 
-            async Task<Result> SaveRequest(VccIssue vcc)
-            {
-                var now = DateTime.UtcNow;
-                vcc.Modified = now;
-                
-                if (request.MoneyAmount is not null) 
-                    vcc.Amount = request.MoneyAmount.Value.Amount;
-
-                if (request.ActivationDate is not null) 
-                    vcc.ActivationDate = request.ActivationDate.Value;
-
-                if (request.DueDate is not null) 
-                    vcc.DueDate = request.DueDate.Value;
-
-                _context.VccDirectEditLogs.Add(new VccDirectEditLog
-                {
-                    VccId = vcc.UniqueId,
-                    Payload = JsonSerializer.Serialize(request),
-                    Created = now
-                });
-                
-                _context.Update(vcc);
-                await _context.SaveChangesAsync();
-                return Result.Success();
-            }
-        }
-
-        
-        private static string TrimCardNumber(string cardNumber)
-        {
-            if (string.IsNullOrEmpty(cardNumber))
-                return cardNumber;
-
-            var cardNumberLength = cardNumber.Length;
-            return cardNumber[^4..].PadLeft(cardNumberLength - 4, '*');
-        }
-        
-
-        private async Task<Result<VccIssue>> GetVcc(string referenceCode)
-        {
-            var issue = await _context.VccIssues
-                .Where(i => i.Status == VccStatuses.Issued)
-                .SingleOrDefaultAsync(i => i.ReferenceCode == referenceCode);
-
-            return issue ?? Result.Failure<VccIssue>($"VCC with reference code `{referenceCode}` not found");
-        }
-
-        private List<CustomField> MapToCustomFieldList(string referenceCode, Dictionary<string, string> dictionary)
-        {
-            var fieldsOptions = _fieldOptionsMonitor.CurrentValue;
-            
-            var list = new List<CustomField>
-            {
-                new()
-                {
-                    Index = fieldsOptions.BookingReferenceCode.Index,
-                    Value = referenceCode[..Math.Min(fieldsOptions.BookingReferenceCode.Length, referenceCode.Length)]
-                }
-            };
-
-            foreach (var (key, value) in dictionary)
-            {
-                if (fieldsOptions.CustomFields.TryGetValue(key, out var fieldSettings))
-                {
-                    list.Add(new CustomField
-                    {
-                        Index = fieldSettings.Index,
-                        Value = value[..Math.Min(fieldSettings.Length, value.Length)]
-                    });
-                }
-            }
-            
-            return list;
-        }
-
-
-        private static Result<AmexCurrencies> GetAmexCurrency(Currencies currency) 
-            => currency switch
-            {
-                Currencies.USD => AmexCurrencies.USD,
-                Currencies.AED => AmexCurrencies.AED,
-                _ => Result.Failure<AmexCurrencies>("Currency is not supported")
-            };
-
-
-        private static ModifyRequest CreateModifyRequest(string tokenNumber, string accountId, string? tokenAmount, 
-            string? tokenStartDate, string? tokenDueDate)
-        {
-            return new ModifyRequest
-            {
-                TokenIdentifier = new TokenIdentifier
-                {
-                    TokenNumber  = tokenNumber
-                },
-                TokenIssuanceParams = new TokenIssuanceParams
-                {
-                    BillingAccountId = accountId,
-                    TokenDetails = new TokenDetails
-                    {
-                        TokenAmount = tokenAmount,
-                        TokenStartDate = tokenStartDate,
-                        TokenEndDate = tokenDueDate
-                    }
-                }
-            };
+            Task SaveRequest(VccIssue vcc)
+                => _vccRecordsManager.Edit(vcc, request);
         }
 
 
         private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
-        private readonly GifuContext _context;
         private readonly AmExOptions _options;
-        private readonly IOptionsMonitor<UserDefinedFieldsOptions> _fieldOptionsMonitor;
+        private readonly IVccIssueRecordsManager _vccRecordsManager;
+        private readonly ICustomFieldsMapper _customFieldsMapper;
         private readonly IOptionsMonitor<DirectEditOptions> _directEditOptionsMonitor;
     }
 }
