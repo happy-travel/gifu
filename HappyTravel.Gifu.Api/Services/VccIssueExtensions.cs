@@ -2,7 +2,7 @@
 using System.Linq;
 using HappyTravel.Gifu.Data.Models;
 
-namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
+namespace HappyTravel.Gifu.Api.Services
 {
     public static class VccIssueExtensions
     {

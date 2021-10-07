@@ -66,7 +66,7 @@ namespace HappyTravel.Gifu.Api.Services
             async Task<Result<(string, string, VirtualCreditCard)>> CreateCard()
             {
                 var uniqueId = UniqueIdGenerator.Get();
-                var payload = RequestGenerator.CreateTokenRequest(uniqueId: uniqueId,
+                var payload = RequestGenerator.GenerateCreateTokenRequest(uniqueId: uniqueId,
                     accountId: _options.Accounts[request.MoneyAmount.Currency],
                     amount: request.MoneyAmount,
                     startDate: request.ActivationDate,
@@ -175,7 +175,7 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result<VccIssue>> ModifyCardAmount(VccIssue vcc)
             {
-                var payload = RequestGenerator.CreateModifyRequest(tokenNumber: vcc.CardNumber,
+                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
                     accountId: _options.Accounts[vcc.Currency],
                     tokenAmount: amount,
                     tokenStartDate: null,
@@ -232,7 +232,7 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result<VccIssue>> EditCard(VccIssue vcc)
             {
-                var payload = RequestGenerator.CreateModifyRequest(tokenNumber: vcc.CardNumber,
+                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
                     accountId: _options.Accounts[vcc.Currency],
                     tokenAmount: request.MoneyAmount,
                     tokenStartDate: request.ActivationDate,

@@ -8,7 +8,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Utils
 {
     public static class RequestGenerator
     {
-        public static CreateTokenRequest CreateTokenRequest(string uniqueId, string accountId, MoneyAmount amount, 
+        public static CreateTokenRequest GenerateCreateTokenRequest(string uniqueId, string accountId, MoneyAmount amount, 
             DateTime startDate, DateTime endDate, List<CustomField> customFields)
         {
             return new CreateTokenRequest
@@ -32,7 +32,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Utils
         }
         
         
-        public static ModifyRequest CreateModifyRequest(string tokenNumber, string accountId, MoneyAmount? tokenAmount, 
+        public static ModifyRequest GenerateModifyTokenRequest(string tokenNumber, string accountId, MoneyAmount? tokenAmount, 
             DateTime? tokenStartDate, DateTime? tokenDueDate)
         {
             return new ModifyRequest
