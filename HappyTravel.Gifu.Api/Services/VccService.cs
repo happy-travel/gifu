@@ -342,31 +342,31 @@ namespace HappyTravel.Gifu.Api.Services
 
             async Task<Result> SaveRequest(VccIssue vcc)
             {
-                var modified = DateTime.UtcNow;
+                var now = DateTime.UtcNow;
                 
                 if (request.MoneyAmount is not null)
                 {
                     vcc.Amount = request.MoneyAmount.Value.Amount;
-                    vcc.Modified = modified;
+                    vcc.Modified = now;
                 }
 
                 if (request.ActivationDate is not null)
                 {
                     vcc.ActivationDate = request.ActivationDate.Value;
-                    vcc.Modified = modified;
+                    vcc.Modified = now;
                 }
 
                 if (request.DueDate is not null)
                 {
                     vcc.DueDate = request.DueDate.Value;
-                    vcc.Modified = modified;
+                    vcc.Modified = now;
                 }
                 
                 _context.VccEditLogs.Add(new VccEditLog
                 {
                     VccId = vcc.UniqueId,
                     Payload = JsonSerializer.Serialize(request),
-                    Created = DateTime.UtcNow
+                    Created = now
                 });
                 
                 _context.Update(vcc);
