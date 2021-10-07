@@ -212,6 +212,7 @@ namespace HappyTravel.Gifu.Api.Services
             }
         }
 
+        
         public Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount)
         {
             _logger.LogVccModifyAmountRequestStarted(referenceCode, amount.Amount);
