@@ -35,7 +35,7 @@ namespace HappyTravel.Gifu.Api.Services
             => await Task.FromResult((string.Empty, new AmexResponse()));
 
         
-        public async Task<Result<(string TransactionId, AmexResponse Response)>> ModifyAmount(ModifyRequest payload) 
+        public async Task<Result<(string TransactionId, AmexResponse Response)>> Edit(ModifyRequest payload) 
             => await Task.FromResult((string.Empty, new AmexResponse()));
     }
 }

@@ -14,5 +14,6 @@ namespace HappyTravel.Gifu.Api.Services
         Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken);
         Task<Result> Delete(string referenceCode);
         Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount);
+        Task<Result> Edit(string referenceCode, VccEditRequest request, string clientId);
     }
 }

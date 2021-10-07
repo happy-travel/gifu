@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
@@ -14,6 +15,7 @@ using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
 using HappyTravel.Money.Enums;
+using HappyTravel.Money.Extensions;
 using HappyTravel.Money.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -27,13 +29,14 @@ namespace HappyTravel.Gifu.Api.Services
     public class VccService : IVccService
     {
         public VccService(IAmExClient client, ILogger<VccService> logger, GifuContext context, IOptions<AmExOptions> options,
-            IOptionsMonitor<UserDefinedFieldsOptions> fieldOptionsMonitor)
+            IOptionsMonitor<UserDefinedFieldsOptions> fieldOptionsMonitor, IOptionsMonitor<DirectEditOptions> directEditOptionsMonitor)
         {
             _client = client;
             _logger = logger;
             _context = context;
             _options = options.Value;
             _fieldOptionsMonitor = fieldOptionsMonitor;
+            _directEditOptionsMonitor = directEditOptionsMonitor;
         }
         
         
@@ -209,6 +212,7 @@ namespace HappyTravel.Gifu.Api.Services
             }
         }
 
+        
         public Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount)
         {
             _logger.LogVccModifyAmountRequestStarted(referenceCode, amount.Amount);
@@ -240,23 +244,13 @@ namespace HappyTravel.Gifu.Api.Services
                 if(!_options.Accounts.TryGetValue(currency, out var accountId))
                     return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
 
-                var payload = new ModifyRequest
-                {
-                    TokenIdentifier = new TokenIdentifier
-                    {
-                        TokenNumber  = vcc.CardNumber
-                    },
-                    TokenIssuanceParams = new ModifyAmountTokenIssuanceParams
-                    {
-                        BillingAccountId = accountId,
-                        TokenDetails = new ModifyAmountTokenDetails
-                        {
-                            TokenAmount = amount.ToAmExFormat()
-                        }
-                    }
-                };
+                var payload = CreateModifyRequest(tokenNumber: vcc.CardNumber,
+                    accountId: accountId,
+                    tokenAmount: amount.ToAmExFormat(),
+                    tokenStartDate: null,
+                    tokenDueDate: null);
                 
-                var (isSuccess, _, result, err) = await _client.ModifyAmount(payload);
+                var (isSuccess, _, result, err) = await _client.Edit(payload);
 
                 if (isSuccess && result.Response.Status.ShortMessage == "success")
                 {
@@ -286,6 +280,95 @@ namespace HappyTravel.Gifu.Api.Services
                     Date = DateTime.UtcNow
                 });
 
+                _context.Update(vcc);
+                await _context.SaveChangesAsync();
+                return Result.Success();
+            }
+        }
+        
+        
+        public async Task<Result> Edit(string referenceCode, VccEditRequest request, string clientId)
+        {
+            return await IsDirectEditEnabled()
+                .Bind(() => GetVcc(referenceCode))
+                .Bind(Validate)
+                .Bind(EditCard)
+                .Bind(SaveRequest);
+
+
+            Result IsDirectEditEnabled()
+            {
+                _logger.LogVccEditRequestStarted(referenceCode);
+
+                return _directEditOptionsMonitor.CurrentValue.IsEnabled
+                    ? Result.Success()
+                    : Result.Failure("VCC editing is disabled");
+            }
+
+
+            Result<VccIssue> Validate(VccIssue vcc)
+            {
+                if (request.ActivationDate is null && request.DueDate is null && request.MoneyAmount is null)
+                    return Result.Failure<VccIssue>("At least one field must be filled");
+
+                if (request.MoneyAmount is not null && request.MoneyAmount.Value.Currency != vcc.Currency)
+                    return Result.Failure<VccIssue>("Currency does not match with VCC currency");
+
+                return vcc;
+            }
+
+
+            async Task<Result<VccIssue>> EditCard(VccIssue vcc)
+            {
+                var (_, isFailure, currency, error) = GetAmexCurrency(vcc.Currency);
+                if (isFailure)
+                    return Result.Failure<VccIssue>(error);
+                
+                if (!_options.Accounts.TryGetValue(currency, out var accountId))
+                    return Result.Failure<VccIssue>($"Cannot get accountId for currency `{currency}`");
+                
+                var payload = CreateModifyRequest(tokenNumber: vcc.CardNumber,
+                    accountId: accountId,
+                    tokenAmount: request.MoneyAmount?.ToAmExFormat(),
+                    tokenStartDate: request.ActivationDate?.ToAmExFormat(),
+                    tokenDueDate: request.DueDate?.ToAmExFormat());
+
+                var (isSuccess, _, result, err) = await _client.Edit(payload);
+
+                if (isSuccess && result.Response.Status.ShortMessage == "success")
+                {
+                    _logger.LogVccEditSuccess(referenceCode);
+                    return vcc;
+                }
+                
+                _logger.LogVccEditFailure(referenceCode, isSuccess 
+                    ? result.Response.Status.DetailedMessage
+                    : err);
+                return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
+            }
+
+
+            async Task<Result> SaveRequest(VccIssue vcc)
+            {
+                var now = DateTime.UtcNow;
+                vcc.Modified = now;
+                
+                if (request.MoneyAmount is not null) 
+                    vcc.Amount = request.MoneyAmount.Value.Amount;
+
+                if (request.ActivationDate is not null) 
+                    vcc.ActivationDate = request.ActivationDate.Value;
+
+                if (request.DueDate is not null) 
+                    vcc.DueDate = request.DueDate.Value;
+
+                _context.VccDirectEditLogs.Add(new VccDirectEditLog
+                {
+                    VccId = vcc.UniqueId,
+                    Payload = JsonSerializer.Serialize(request),
+                    Created = now
+                });
+                
                 _context.Update(vcc);
                 await _context.SaveChangesAsync();
                 return Result.Success();
@@ -350,10 +433,34 @@ namespace HappyTravel.Gifu.Api.Services
             };
 
 
+        private static ModifyRequest CreateModifyRequest(string tokenNumber, string accountId, string? tokenAmount, 
+            string? tokenStartDate, string? tokenDueDate)
+        {
+            return new ModifyRequest
+            {
+                TokenIdentifier = new TokenIdentifier
+                {
+                    TokenNumber  = tokenNumber
+                },
+                TokenIssuanceParams = new TokenIssuanceParams
+                {
+                    BillingAccountId = accountId,
+                    TokenDetails = new TokenDetails
+                    {
+                        TokenAmount = tokenAmount,
+                        TokenStartDate = tokenStartDate,
+                        TokenEndDate = tokenDueDate
+                    }
+                }
+            };
+        }
+
+
         private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
         private readonly GifuContext _context;
         private readonly AmExOptions _options;
         private readonly IOptionsMonitor<UserDefinedFieldsOptions> _fieldOptionsMonitor;
+        private readonly IOptionsMonitor<DirectEditOptions> _directEditOptionsMonitor;
     }
 }

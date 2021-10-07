@@ -35,7 +35,7 @@ namespace HappyTravel.Gifu.Api.Services
             => SendRequest(HttpMethod.Delete, payload);
 
 
-        public Task<Result<(string TransactionId, AmexResponse Response)>> ModifyAmount(ModifyRequest payload)
+        public Task<Result<(string TransactionId, AmexResponse Response)>> Edit(ModifyRequest payload)
             => SendRequest(HttpMethod.Put, payload);
 
 
