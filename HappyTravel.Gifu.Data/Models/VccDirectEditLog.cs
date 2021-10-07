@@ -2,7 +2,7 @@
 
 namespace HappyTravel.Gifu.Data.Models
 {
-    public class VccEditLog
+    public class VccDirectEditLog 
     {
         public int Id { get; set; }
         public string VccId { get; set; } = string.Empty;

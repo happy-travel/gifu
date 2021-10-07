@@ -289,14 +289,21 @@ namespace HappyTravel.Gifu.Api.Services
         
         public async Task<Result> Edit(string referenceCode, VccEditRequest request, string clientId)
         {
-            _logger.LogVccEditRequestStarted(referenceCode);
-            
-            return await Result.Success()
-                .Ensure(() => _directEditOptionsMonitor.CurrentValue.IsEnabled, "VCC editing is disabled")
+            return await IsDirectEditEnabled()
                 .Bind(() => GetVcc(referenceCode))
                 .Bind(Validate)
                 .Bind(EditCard)
                 .Bind(SaveRequest);
+
+
+            Result IsDirectEditEnabled()
+            {
+                _logger.LogVccEditRequestStarted(referenceCode);
+
+                return _directEditOptionsMonitor.CurrentValue.IsEnabled
+                    ? Result.Success()
+                    : Result.Failure("VCC editing is disabled");
+            }
 
 
             Result<VccIssue> Validate(VccIssue vcc)
@@ -344,26 +351,18 @@ namespace HappyTravel.Gifu.Api.Services
             async Task<Result> SaveRequest(VccIssue vcc)
             {
                 var now = DateTime.UtcNow;
+                vcc.Modified = now;
                 
-                if (request.MoneyAmount is not null)
-                {
+                if (request.MoneyAmount is not null) 
                     vcc.Amount = request.MoneyAmount.Value.Amount;
-                    vcc.Modified = now;
-                }
 
-                if (request.ActivationDate is not null)
-                {
+                if (request.ActivationDate is not null) 
                     vcc.ActivationDate = request.ActivationDate.Value;
-                    vcc.Modified = now;
-                }
 
-                if (request.DueDate is not null)
-                {
+                if (request.DueDate is not null) 
                     vcc.DueDate = request.DueDate.Value;
-                    vcc.Modified = now;
-                }
-                
-                _context.VccEditLogs.Add(new VccEditLog
+
+                _context.VccDirectEditLogs.Add(new VccDirectEditLog
                 {
                     VccId = vcc.UniqueId,
                     Payload = JsonSerializer.Serialize(request),

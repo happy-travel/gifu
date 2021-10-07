@@ -9,7 +9,7 @@ namespace HappyTravel.Gifu.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "VccEditLogs",
+                name: "VccDirectEditLogs",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -20,19 +20,19 @@ namespace HappyTravel.Gifu.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VccEditLogs", x => x.Id);
+                    table.PrimaryKey("PK_VccDirectEditLogs", x => x.Id);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_VccEditLogs_VccId",
-                table: "VccEditLogs",
+                name: "IX_VccDirectEditLogs_VccId",
+                table: "VccDirectEditLogs",
                 column: "VccId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "VccEditLogs");
+                name: "VccDirectEditLogs");
         }
     }
 }

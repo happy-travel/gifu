@@ -44,7 +44,7 @@ namespace HappyTravel.Gifu.Data.Migrations
                     b.ToTable("AmountChangesHistories");
                 });
 
-            modelBuilder.Entity("HappyTravel.Gifu.Data.Models.VccEditLog", b =>
+            modelBuilder.Entity("HappyTravel.Gifu.Data.Models.VccDirectEditLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -66,7 +66,7 @@ namespace HappyTravel.Gifu.Data.Migrations
 
                     b.HasIndex("VccId");
 
-                    b.ToTable("VccEditLogs");
+                    b.ToTable("VccDirectEditLogs");
                 });
 
             modelBuilder.Entity("HappyTravel.Gifu.Data.Models.VccIssue", b =>
