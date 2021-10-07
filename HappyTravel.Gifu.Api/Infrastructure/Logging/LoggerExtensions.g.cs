@@ -51,6 +51,18 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
                 new EventId(81040, "ResponseDeserializationFailed"),
                 "Response deserialization failed: {Response}");
             
+            VccEditRequestStarted = LoggerMessage.Define<string>(LogLevel.Information,
+                new EventId(81050, "VccEditRequestStarted"),
+                "Editing VCC amount for '{ReferenceCode}' started");
+            
+            VccEditFailure = LoggerMessage.Define<string, string>(LogLevel.Error,
+                new EventId(81051, "VccEditFailure"),
+                "Editing VCC for '{ReferenceCode}' failed. '{Error}'");
+            
+            VccEditSuccess = LoggerMessage.Define<string>(LogLevel.Information,
+                new EventId(81052, "VccEditSuccess"),
+                "Editing VCC for '{ReferenceCode}' completed successfully");
+            
         }
     
                 
@@ -86,6 +98,15 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
                 
          public static void LogResponseDeserializationFailed(this ILogger logger, string Response, Exception exception = null)
             => ResponseDeserializationFailed(logger, Response, exception);
+                
+         public static void LogVccEditRequestStarted(this ILogger logger, string ReferenceCode, Exception exception = null)
+            => VccEditRequestStarted(logger, ReferenceCode, exception);
+                
+         public static void LogVccEditFailure(this ILogger logger, string ReferenceCode, string Error, Exception exception = null)
+            => VccEditFailure(logger, ReferenceCode, Error, exception);
+                
+         public static void LogVccEditSuccess(this ILogger logger, string ReferenceCode, Exception exception = null)
+            => VccEditSuccess(logger, ReferenceCode, exception);
     
     
         
@@ -110,5 +131,11 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Logging
         private static readonly Action<ILogger, string, decimal, Exception> VccModifyAmountRequestSuccess;
         
         private static readonly Action<ILogger, string, Exception> ResponseDeserializationFailed;
+        
+        private static readonly Action<ILogger, string, Exception> VccEditRequestStarted;
+        
+        private static readonly Action<ILogger, string, string, Exception> VccEditFailure;
+        
+        private static readonly Action<ILogger, string, Exception> VccEditSuccess;
     }
 }

@@ -288,6 +288,8 @@ namespace HappyTravel.Gifu.Api.Services
         
         public async Task<Result> Edit(string referenceCode, VccEditRequest request, string clientId)
         {
+            _logger.LogVccEditRequestStarted(referenceCode);
+            
             return await Result.Success()
                 .Ensure(() => _directEditOptionsMonitor.CurrentValue.IsEnabled, "VCC editing is disabled")
                 .Bind(() => GetVcc(referenceCode))
@@ -327,11 +329,13 @@ namespace HappyTravel.Gifu.Api.Services
 
                 if (isSuccess && result.Response.Status.ShortMessage == "success")
                 {
-                    // TODO: add logging
+                    _logger.LogVccEditSuccess(referenceCode);
                     return vcc;
                 }
                 
-                // TODO: add logging
+                _logger.LogVccEditFailure(referenceCode, isSuccess 
+                    ? result.Response.Status.DetailedMessage
+                    : err);
                 return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
             }
 
