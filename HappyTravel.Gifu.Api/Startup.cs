@@ -52,6 +52,10 @@ namespace HappyTravel.Gifu.Api
                     {
                         policy.RequireClaim("scope", "vcc.history");
                     });
+                    options.AddPolicy("CanEdit", policy =>
+                    {
+                        policy.RequireClaim("scope", "vcc.edit");
+                    });
                 })
                 .AddApiExplorer();
 
@@ -59,6 +63,7 @@ namespace HappyTravel.Gifu.Api
                 .AddDbContextCheck<GifuContext>();
 
             services.Configure<UserDefinedFieldsOptions>(Configuration.GetSection("UserDefinedFieldsOptions"));
+            services.Configure<DirectEditOptions>(Configuration.GetSection("DirectEditOptions"));
 
             services
                 .AddProblemDetailsErrorHandling()
