@@ -11,31 +11,27 @@ namespace HappyTravel.Gifu.Api.Services
     /// </summary>
     public class FakeAmexClient : IAmExClient
     {
-        public async Task<Result<(string TransactionId, AmexResponse Response)>> CreateToken(CreateTokenRequest payload)
+        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> CreateToken(CreateTokenRequest payload)
         {
             var transactionId = Guid.NewGuid().ToString();
-            var response = new AmexResponse()
+            var response = new TokenIssuanceData
             {
-                Status = new Status { ShortMessage = "success" },
-                TokenIssuanceData = new TokenIssuanceData
+                TokenDetails = new Models.AmEx.Response.TokenDetails
                 {
-                    TokenDetails = new Models.AmEx.Response.TokenDetails
-                    {
-                        TokenNumber = Guid.NewGuid().ToString(),
-                        TokenSecurityCode = "777",
-                        TokenExpiryDate = payload.TokenIssuanceParams.TokenDetails.TokenEndDate
-                    }
+                    TokenNumber = Guid.NewGuid().ToString(),
+                    TokenSecurityCode = "777",
+                    TokenExpiryDate = payload.TokenIssuanceParams.TokenDetails.TokenEndDate
                 }
             };
             return await Task.FromResult((transactionId, response));
         }
 
         
-        public async Task<Result<(string TransactionId, AmexResponse Response)>> Delete(DeleteRequest payload) 
-            => await Task.FromResult((string.Empty, new AmexResponse()));
+        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Delete(DeleteRequest payload) 
+            => await Task.FromResult((string.Empty, new TokenIssuanceData()));
 
         
-        public async Task<Result<(string TransactionId, AmexResponse Response)>> Edit(ModifyRequest payload) 
-            => await Task.FromResult((string.Empty, new AmexResponse()));
+        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Edit(ModifyRequest payload) 
+            => await Task.FromResult((string.Empty, new TokenIssuanceData()));
     }
 }

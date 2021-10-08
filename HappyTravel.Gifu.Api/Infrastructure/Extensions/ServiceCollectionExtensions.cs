@@ -7,6 +7,7 @@ using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Data;
 using HappyTravel.HttpRequestLogger;
+using HappyTravel.Money.Enums;
 using HappyTravel.VaultClient;
 using IdentityServer4.AccessTokenValidation;
 using Microsoft.AspNetCore.Builder;
@@ -84,7 +85,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 
             var accounts = amExAccounts.Select(a => new
                 {
-                    Currency = Enum.Parse<AmexCurrencies>(a.Key),
+                    Currency = Enum.Parse<Currencies>(a.Key),
                     AccountId = a.Value
                 })
                 .ToDictionary(a => a.Currency, a => a.AccountId);

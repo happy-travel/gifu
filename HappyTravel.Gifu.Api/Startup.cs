@@ -74,6 +74,8 @@ namespace HappyTravel.Gifu.Api
                 .ConfigureAuthentication(vaultClient, Configuration)
                 .ConfigureIssuer(vaultClient, Configuration)
                 .AddTransient<IClientService, ClientService>()
+                .AddTransient<ICustomFieldsMapper, CustomFieldsMapper>()
+                .AddTransient<IVccIssueRecordsManager, VccIssueRecordsManager>()
                 .AddTracing(Configuration, options =>
                 {
                     options.ServiceName = $"{HostEnvironment.ApplicationName}-{HostEnvironment.EnvironmentName}";
