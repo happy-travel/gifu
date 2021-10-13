@@ -116,7 +116,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
                 var connectionString = configuration["Database:ConnectionString"];
                 options.UseNpgsql(string.Format(connectionString, host, port, userId, password), builder =>
                 {
-                    builder.EnableRetryOnFailure();
+                    builder.EnableRetryOnFailure(3);
                 });
                 options.UseInternalServiceProvider(null);
                 options.EnableSensitiveDataLogging(false);
