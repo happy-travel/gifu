@@ -57,7 +57,9 @@ namespace HappyTravel.Gifu.Api
                         .AddEnvironmentVariables()
                         .AddConsulKeyValueClient(Environment.GetEnvironmentVariable("CONSUL_HTTP_ADDR") ?? throw new InvalidOperationException("Consul endpoint is not set"),
                         "gifu",
-                        Environment.GetEnvironmentVariable("CONSUL_HTTP_TOKEN") ?? throw new InvalidOperationException("Consul http token is not set"));
+                        Environment.GetEnvironmentVariable("CONSUL_HTTP_TOKEN") ?? throw new InvalidOperationException("Consul http token is not set"),
+                        environment.EnvironmentName,
+                        environment.IsLocal());
                     
                 })
                 .ConfigureLogging((hostingContext, logging) =>
