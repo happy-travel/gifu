@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
@@ -20,7 +21,7 @@ namespace HappyTravel.Gifu.Api.Services
                 {
                     TokenNumber = Guid.NewGuid().ToString(),
                     TokenSecurityCode = "777",
-                    TokenExpiryDate = payload.TokenIssuanceParams.TokenDetails.TokenEndDate
+                    TokenExpiryDate = DateTime.ParseExact(payload.TokenIssuanceParams.TokenDetails.TokenEndDate!, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyyMM")
                 }
             };
             return await Task.FromResult((transactionId, response));
