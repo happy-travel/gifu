@@ -75,7 +75,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
 
             if (configuration.GetValue<bool>("Testing:UseFakeAmexClient"))
             {
-                services.AddHttpClient<IAmExClient, FakeAmexClient>();
+                services.AddTransient<IAmExClient, FakeAmexClient>();
             }
             else
             {
