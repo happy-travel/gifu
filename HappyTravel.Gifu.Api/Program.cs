@@ -32,11 +32,14 @@ namespace HappyTravel.Gifu.Api
                             options.IncludeActivityData = true;
                             options.BeforeSend = sentryEvent =>
                             {
-                                foreach (var (key, value) in OpenTelemetry.Baggage.Current)
-                                    sentryEvent.SetTag(key, value);
-                                    
-                                sentryEvent.SetTag("TraceId", Activity.Current?.TraceId.ToString() ?? string.Empty);
-                                sentryEvent.SetTag("SpanId", Activity.Current?.SpanId.ToString() ?? string.Empty);
+                                if (Activity.Current is null)
+                                    return sentryEvent;
+                                
+                                foreach (var (key, value) in Activity.Current.Baggage)
+                                    sentryEvent.SetTag(key, value ?? string.Empty);
+
+                                sentryEvent.SetTag("TraceId", Activity.Current.TraceId.ToString());
+                                sentryEvent.SetTag("SpanId", Activity.Current.SpanId.ToString());
 
                                 return sentryEvent;
                             };
