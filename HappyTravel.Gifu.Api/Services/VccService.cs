@@ -21,15 +21,15 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public class VccService : IVccService
     {
-        public VccService(IAmExClient client, ILogger<VccService> logger, IVccIssueRecordsManager vccRecordsManager, IOptions<AmExOptions> options,
-            ICustomFieldsMapper customFieldsMapper, IOptionsMonitor<DirectEditOptions> directEditOptionsMonitor)
+        public VccService(IAmExClient client, ILogger<VccService> logger, IVccIssueRecordsManager vccRecordsManager,
+            ICustomFieldsMapper customFieldsMapper, IOptionsMonitor<DirectEditOptions> directEditOptionsMonitor, IAccountsService accountsService)
         {
             _client = client;
             _logger = logger;
             _vccRecordsManager = vccRecordsManager;
-            _options = options.Value;
             _customFieldsMapper = customFieldsMapper;
             _directEditOptionsMonitor = directEditOptionsMonitor;
+            _accountsService = accountsService;
         }
         
         
@@ -38,6 +38,7 @@ namespace HappyTravel.Gifu.Api.Services
             _logger.LogVccIssueRequestStarted(request.ReferenceCode, request.MoneyAmount.Amount, request.MoneyAmount.Currency.ToString());
             
             return await ValidateRequest()
+                .Bind(() => _accountsService.GetAccountId(request.MoneyAmount.Currency))
                 .Bind(CreateCard)
                 .Finally(SaveResult);
 
@@ -63,11 +64,11 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            async Task<Result<(string, string, VirtualCreditCard)>> CreateCard()
+            async Task<Result<(string, string, VirtualCreditCard)>> CreateCard(string accountId)
             {
                 var uniqueId = UniqueIdGenerator.Get();
                 var payload = RequestGenerator.GenerateCreateTokenRequest(uniqueId: uniqueId,
-                    accountId: _options.Accounts[request.MoneyAmount.Currency],
+                    accountId: accountId,
                     amount: request.MoneyAmount,
                     startDate: request.ActivationDate,
                     endDate: request.DueDate,
@@ -122,16 +123,18 @@ namespace HappyTravel.Gifu.Api.Services
             _logger.LogVccDeleteRequestStarted(referenceCode);
 
             return await _vccRecordsManager.Get(referenceCode)
+                .Bind(GetAccountId)
                 .Bind(DeleteCard)
                 .Map(Save);
 
 
-            async Task<Result<VccIssue>> DeleteCard(VccIssue vcc)
+            async Task<Result<VccIssue>> DeleteCard((VccIssue Vcc, string AccountId) data)
             {
+                var (vcc, accountId) = data;
                 var payload = new DeleteRequest
                 {
                     TokenReferenceId = vcc.UniqueId,
-                    BillingAccountId = _options.Accounts[vcc.Currency]
+                    BillingAccountId = accountId
                 };
 
                 var (isSuccess, _, _, err) = await _client.Delete(payload);
@@ -157,6 +160,7 @@ namespace HappyTravel.Gifu.Api.Services
             
             return await _vccRecordsManager.Get(referenceCode)
                 .Bind(ValidateRequest)
+                .Bind(GetAccountId)
                 .Bind(ModifyCardAmount)
                 .Map(SaveHistory);
             
@@ -173,10 +177,11 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            async Task<Result<VccIssue>> ModifyCardAmount(VccIssue vcc)
+            async Task<Result<VccIssue>> ModifyCardAmount((VccIssue Vcc, string AccountId) data)
             {
+                var (vcc, accountId) = data;
                 var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
-                    accountId: _options.Accounts[vcc.Currency],
+                    accountId: accountId,
                     tokenAmount: amount,
                     tokenStartDate: null,
                     tokenDueDate: null);
@@ -204,6 +209,7 @@ namespace HappyTravel.Gifu.Api.Services
             return await IsDirectEditEnabled()
                 .Bind(() => _vccRecordsManager.Get(referenceCode))
                 .Bind(Validate)
+                .Bind(GetAccountId)
                 .Bind(EditCard)
                 .Map(SaveRequest);
 
@@ -230,10 +236,11 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            async Task<Result<VccIssue>> EditCard(VccIssue vcc)
+            async Task<Result<VccIssue>> EditCard((VccIssue Vcc, string AccountId) data)
             {
+                var (vcc, accountId) = data;
                 var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
-                    accountId: _options.Accounts[vcc.Currency],
+                    accountId: accountId,
                     tokenAmount: request.MoneyAmount,
                     tokenStartDate: request.ActivationDate,
                     tokenDueDate: request.DueDate);
@@ -254,13 +261,23 @@ namespace HappyTravel.Gifu.Api.Services
             Task SaveRequest(VccIssue vcc)
                 => _vccRecordsManager.Edit(vcc, request);
         }
+        
+        
+        private Result<(VccIssue, string)> GetAccountId(VccIssue vcc)
+        {
+            var accountId = _accountsService.GetAccountId(vcc.Currency);
+
+            return accountId.IsSuccess
+                ? (vcc, accountId.Value)
+                : Result.Failure<(VccIssue, string)>(accountId.Error);
+        }
 
 
         private readonly IAmExClient _client;
         private readonly ILogger<VccService> _logger;
-        private readonly AmExOptions _options;
         private readonly IVccIssueRecordsManager _vccRecordsManager;
         private readonly ICustomFieldsMapper _customFieldsMapper;
+        private readonly IAccountsService _accountsService;
         private readonly IOptionsMonitor<DirectEditOptions> _directEditOptionsMonitor;
     }
 }

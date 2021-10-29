@@ -76,6 +76,7 @@ namespace HappyTravel.Gifu.Api
                 .AddTransient<IClientService, ClientService>()
                 .AddTransient<ICustomFieldsMapper, CustomFieldsMapper>()
                 .AddTransient<IVccIssueRecordsManager, VccIssueRecordsManager>()
+                .AddTransient<IAccountsService, AccountService>()
                 .AddTracing(Configuration, options =>
                 {
                     options.ServiceName = $"{HostEnvironment.ApplicationName}-{HostEnvironment.EnvironmentName}";
