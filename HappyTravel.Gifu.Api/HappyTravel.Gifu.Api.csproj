@@ -19,7 +19,7 @@
     <PackageReference Include="HappyTravel.ErrorHandling" Version="1.2.2" />
     <PackageReference Include="HappyTravel.HttpRequestLogger" Version="0.9.0" />
     <PackageReference Include="HappyTravel.Money" Version="1.3.6" />
-    <PackageReference Include="HappyTravel.StdOutLogger" Version="1.5.0" />
+    <PackageReference Include="HappyTravel.StdOutLogger" Version="1.5.1" />
     <PackageReference Include="HappyTravel.VaultClient" Version="1.1.0" />
     <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="3.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
