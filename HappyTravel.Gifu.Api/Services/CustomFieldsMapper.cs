@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using Microsoft.Extensions.Options;
@@ -14,7 +15,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public List<CustomField> Map(string referenceCode, Dictionary<string, string> dictionary)
+        public List<CustomField> Map(string referenceCode, Dictionary<string, string?> dictionary)
         {
             var fieldsOptions = _fieldOptionsMonitor.CurrentValue;
             
@@ -31,6 +32,9 @@ namespace HappyTravel.Gifu.Api.Services
             {
                 if (fieldsOptions.CustomFields.TryGetValue(key, out var fieldSettings))
                 {
+                    if (value is null)
+                        continue;
+
                     list.Add(new CustomField
                     {
                         Index = fieldSettings.Index,
