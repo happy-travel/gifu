@@ -30,11 +30,11 @@ namespace HappyTravel.Gifu.Api.Services
 
             foreach (var (key, value) in dictionary)
             {
+                if (value is null)
+                    continue;
+                
                 if (fieldsOptions.CustomFields.TryGetValue(key, out var fieldSettings))
                 {
-                    if (value is null)
-                        continue;
-
                     list.Add(new CustomField
                     {
                         Index = fieldSettings.Index,
