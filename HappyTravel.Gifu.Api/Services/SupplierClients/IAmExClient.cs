@@ -3,7 +3,7 @@ using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
 
-namespace HappyTravel.Gifu.Api.Services
+namespace HappyTravel.Gifu.Api.Services.SupplierClients
 {
     public interface IAmExClient
     {

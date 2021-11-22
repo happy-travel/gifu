@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
-using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Infrastructure.Utils;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
+using HappyTravel.Gifu.Api.Services.SupplierClients;
+using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
 using HappyTravel.Money.Models;
@@ -19,11 +18,11 @@ using Microsoft.Extensions.Options;
 
 namespace HappyTravel.Gifu.Api.Services
 {
-    public class VccService : IVccService
-    {
-        public VccService(IAmExClient client, ILogger<VccService> logger, IVccIssueRecordsManager vccRecordsManager,
+    public class AmExService : IVccSupplierService
+    {   
+        public AmExService(IAmExClient client, ILogger<AmExService> logger, IVccIssueRecordsManager vccRecordsManager,
             ICustomFieldsMapper customFieldsMapper, IOptionsMonitor<DirectEditOptions> directEditOptionsMonitor, IAccountsService accountsService)
-        {
+        {            
             _client = client;
             _logger = logger;
             _vccRecordsManager = vccRecordsManager;
@@ -31,37 +30,13 @@ namespace HappyTravel.Gifu.Api.Services
             _directEditOptionsMonitor = directEditOptionsMonitor;
             _accountsService = accountsService;
         }
-        
-        
+
+
         public async Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
-        {
-            _logger.LogVccIssueRequestStarted(request.ReferenceCode, request.MoneyAmount.Amount, request.MoneyAmount.Currency.ToString());
-            
-            return await ValidateRequest()
-                .Bind(() => _accountsService.GetAccountId(request.MoneyAmount.Currency))
+        {           
+            return await _accountsService.GetAccountId(request.MoneyAmount.Currency)
                 .Bind(CreateCard)
                 .Finally(SaveResult);
-
-
-            async Task<Result> ValidateRequest()
-            {
-                var validator = new InlineValidator<VccIssueRequest>();
-                var today = DateTime.UtcNow.Date;
-
-                validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
-                validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
-                validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
-                validator.RuleFor(r => r.ReferenceCode)
-                    .NotEmpty()
-                    .MustAsync(async (referenceCode, _) => !await _vccRecordsManager.IsIssued(referenceCode))
-                    .WithMessage($"VCC for '{request.ReferenceCode}' already issued");
-
-                var result = await validator.ValidateAsync(request, cancellationToken);
-
-                return result.IsValid
-                    ? Result.Success()
-                    : Result.Failure(result.ToString(";"));
-            }
 
 
             async Task<Result<(string, string, VirtualCreditCard)>> CreateCard(string accountId)
@@ -105,7 +80,8 @@ namespace HappyTravel.Gifu.Api.Services
                     CardNumber = result.Value.Vcc.Number,
                     Created = now,
                     Modified = now,
-                    Status = VccStatuses.Issued
+                    Status = VccStatuses.Issued,
+                    Supplier = VccSuppliers.AmEx
                 });
                 
                 _logger.LogVccIssueRequestSuccess(request.ReferenceCode, result.Value.UniqueId);
@@ -114,38 +90,30 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
 
-        public async Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken) 
-            => (await _vccRecordsManager.Get(referenceCodes)).TrimCardNumbers().ToList();
-
-
-        public async Task<Result> Delete(string referenceCode)
+        public async Task<Result> Delete(VccIssue Vcc)
         {
-            _logger.LogVccDeleteRequestStarted(referenceCode);
-
-            return await _vccRecordsManager.Get(referenceCode)
-                .Bind(GetAccountId)
+            return await GetAccountId(Vcc)
                 .Bind(DeleteCard)
                 .Map(Save);
 
 
-            async Task<Result<VccIssue>> DeleteCard((VccIssue Vcc, string AccountId) data)
-            {
-                var (vcc, accountId) = data;
+            async Task<Result<VccIssue>> DeleteCard(string AccountId)
+            {                
                 var payload = new DeleteRequest
                 {
-                    TokenReferenceId = vcc.UniqueId,
-                    BillingAccountId = accountId
+                    TokenReferenceId = Vcc.UniqueId,
+                    BillingAccountId = AccountId
                 };
 
                 var (isSuccess, _, _, err) = await _client.Delete(payload);
                 if (isSuccess)
                 {
-                    _logger.LogVccDeleteRequestSuccess(referenceCode);
-                    return vcc;
+                    _logger.LogVccDeleteRequestSuccess(Vcc.ReferenceCode);
+                    return Vcc;
                 }
                 
-                _logger.LogVccDeleteRequestFailure(referenceCode, err);
-                return Result.Failure<VccIssue>($"Deleting VCC for `{referenceCode}` failed");
+                _logger.LogVccDeleteRequestFailure(Vcc.ReferenceCode, err);
+                return Result.Failure<VccIssue>($"Deleting VCC for `{Vcc.ReferenceCode}` failed");
             }
 
 
@@ -154,34 +122,17 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
         
-        public async Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount)
+        public async Task<Result> ModifyAmount(VccIssue Vcc, MoneyAmount amount)
         {
-            _logger.LogVccModifyAmountRequestStarted(referenceCode, amount.Amount);
-            
-            return await _vccRecordsManager.Get(referenceCode)
-                .Bind(ValidateRequest)
-                .Bind(GetAccountId)
+            return await GetAccountId(Vcc)
                 .Bind(ModifyCardAmount)
                 .Map(SaveHistory);
-            
-            
-            Result<VccIssue> ValidateRequest(VccIssue vcc)
-            {
-                if (vcc.Currency != amount.Currency)
-                    return Result.Failure<VccIssue>("Amount currency must be equal with VCC currency");
-                
-                if (amount.Amount >= vcc.Amount)
-                    return Result.Failure<VccIssue>("Amount must be less than VCC amount");
-                
-                return vcc;
-            }
 
 
-            async Task<Result<VccIssue>> ModifyCardAmount((VccIssue Vcc, string AccountId) data)
-            {
-                var (vcc, accountId) = data;
-                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
-                    accountId: accountId,
+            async Task<Result<VccIssue>> ModifyCardAmount(string AccountId)
+            {                
+                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: Vcc.CardNumber,
+                    accountId: AccountId,
                     tokenAmount: amount,
                     tokenStartDate: null,
                     tokenDueDate: null);
@@ -190,12 +141,12 @@ namespace HappyTravel.Gifu.Api.Services
 
                 if (isSuccess)
                 {
-                    _logger.LogVccModifyAmountRequestSuccess(referenceCode, amount.Amount);
-                    return vcc;
+                    _logger.LogVccModifyAmountRequestSuccess(Vcc.ReferenceCode, amount.Amount);
+                    return Vcc;
                 }
                 
-                _logger.LogVccModifyAmountRequestFailure(referenceCode, err);
-                return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
+                _logger.LogVccModifyAmountRequestFailure(Vcc.ReferenceCode, err);
+                return Result.Failure<VccIssue>($"Modifying VCC for `{Vcc.ReferenceCode}` failed");
             }
 
 
@@ -204,10 +155,9 @@ namespace HappyTravel.Gifu.Api.Services
         }
         
         
-        public async Task<Result> Edit(string referenceCode, VccEditRequest request, string clientId)
+        public async Task<Result> Edit(VccIssue Vcc, VccEditRequest request, string clientId)
         {
             return await IsDirectEditEnabled()
-                .Bind(() => _vccRecordsManager.Get(referenceCode))
                 .Bind(Validate)
                 .Bind(GetAccountId)
                 .Bind(EditCard)
@@ -216,7 +166,7 @@ namespace HappyTravel.Gifu.Api.Services
 
             Result IsDirectEditEnabled()
             {
-                _logger.LogVccEditRequestStarted(referenceCode);
+                _logger.LogVccEditRequestStarted(Vcc.ReferenceCode);
 
                 return _directEditOptionsMonitor.CurrentValue.IsEnabled
                     ? Result.Success()
@@ -224,23 +174,22 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            Result<VccIssue> Validate(VccIssue vcc)
+            Result<VccIssue> Validate()
             {
                 if (request.ActivationDate is null && request.DueDate is null && request.MoneyAmount is null)
                     return Result.Failure<VccIssue>("At least one field must be filled");
 
-                if (request.MoneyAmount is not null && request.MoneyAmount.Value.Currency != vcc.Currency)
+                if (request.MoneyAmount is not null && request.MoneyAmount.Value.Currency != Vcc.Currency)
                     return Result.Failure<VccIssue>("Currency does not match with VCC currency");
 
-                return vcc;
+                return Vcc;
             }
 
 
-            async Task<Result<VccIssue>> EditCard((VccIssue Vcc, string AccountId) data)
+            async Task<Result> EditCard(string AccountId)
             {
-                var (vcc, accountId) = data;
-                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
-                    accountId: accountId,
+                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: Vcc.CardNumber,
+                    accountId: AccountId,
                     tokenAmount: request.MoneyAmount,
                     tokenStartDate: request.ActivationDate,
                     tokenDueDate: request.DueDate);
@@ -249,32 +198,31 @@ namespace HappyTravel.Gifu.Api.Services
 
                 if (isSuccess)
                 {
-                    _logger.LogVccEditSuccess(referenceCode);
-                    return vcc;
+                    _logger.LogVccEditSuccess(Vcc.ReferenceCode);
                 }
                 
-                _logger.LogVccEditFailure(referenceCode, err);
-                return Result.Failure<VccIssue>($"Modifying VCC for `{referenceCode}` failed");
+                _logger.LogVccEditFailure(Vcc.ReferenceCode, err);
+                return Result.Failure($"Modifying VCC for `{Vcc.ReferenceCode}` failed");
             }
 
 
-            Task SaveRequest(VccIssue vcc)
-                => _vccRecordsManager.Edit(vcc, request);
+            Task SaveRequest()
+                => _vccRecordsManager.Edit(Vcc, request);
         }
         
         
-        private Result<(VccIssue, string)> GetAccountId(VccIssue vcc)
+        private Result<string> GetAccountId(VccIssue vcc)
         {
             var accountId = _accountsService.GetAccountId(vcc.Currency);
 
             return accountId.IsSuccess
-                ? (vcc, accountId.Value)
-                : Result.Failure<(VccIssue, string)>(accountId.Error);
+                ? accountId.Value
+                : Result.Failure<string>(accountId.Error);
         }
 
 
         private readonly IAmExClient _client;
-        private readonly ILogger<VccService> _logger;
+        private readonly ILogger<AmExService> _logger;
         private readonly IVccIssueRecordsManager _vccRecordsManager;
         private readonly ICustomFieldsMapper _customFieldsMapper;
         private readonly IAccountsService _accountsService;

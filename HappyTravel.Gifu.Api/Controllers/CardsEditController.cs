@@ -2,6 +2,7 @@
 using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Api.Services.VccServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

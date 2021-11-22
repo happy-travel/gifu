@@ -17,5 +17,6 @@ namespace HappyTravel.Gifu.Data.Models
         public DateTime Created { get; set; }
         public DateTime Modified { get; set; }
         public VccStatuses Status { get; set; }
+        public VccSuppliers Supplier { get; set; }
     }
 }

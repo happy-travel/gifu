@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
+using HappyTravel.Gifu.Api.Services.SupplierClients;
 
 namespace HappyTravel.Gifu.Api.Services
 {

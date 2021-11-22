@@ -15,7 +15,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace HappyTravel.Gifu.Api.Services
+namespace HappyTravel.Gifu.Api.Services.SupplierClients
 {
     public class AmExClient : IAmExClient
     {

@@ -3,8 +3,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
+using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Api.Services.SupplierClients;
+using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data;
 using HappyTravel.HttpRequestLogger;
 using HappyTravel.Money.Enums;
@@ -65,7 +68,7 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
             });
 
 
-        public static IServiceCollection ConfigureIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
+        public static IServiceCollection ConfigureAmExIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
         {
             var amExOptions = vaultClient.Get(configuration["AmExOptions"])
                 .GetAwaiter().GetResult();
@@ -97,10 +100,19 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
                     o.ClientSecret = amExOptions["clientSecret"];
                     o.Accounts = accounts;
                 })
-                .AddTransient<IVccService, VccService>();
+                .AddTransient<IVccSupplierService, AmExService>();
         }
-        
-        
+
+
+        public static IServiceCollection ConfigureVccServiceResolver(this IServiceCollection services)
+        {
+            return services.Configure<VccServiceResolverOptions>(o =>
+            {
+                o.AmexCurrencies = new() { Currencies.AED, Currencies.USD };
+            });
+        }
+
+
         public static IServiceCollection ConfigureDatabaseOptions(this IServiceCollection services, VaultClient.VaultClient vaultClient, 
             IConfiguration configuration)
         {

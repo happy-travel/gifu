@@ -3,15 +3,17 @@ using System;
 using HappyTravel.Gifu.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace HappyTravel.Gifu.Data.Migrations
 {
     [DbContext(typeof(GifuContext))]
-    partial class GifuContextModelSnapshot : ModelSnapshot
+    [Migration("20211119082511_AddVccSupplierColumn")]
+    partial class AddVccSupplierColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

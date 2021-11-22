@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
