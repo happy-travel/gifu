@@ -10,8 +10,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HappyTravel.Gifu.Data.Migrations
 {
     [DbContext(typeof(GifuContext))]
-    [Migration("20211119082511_AddVccSupplierColumn")]
-    partial class AddVccSupplierColumn
+    [Migration("20211208061652_AddVccVendorColumn")]
+    partial class AddVccVendorColumn
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -109,12 +109,12 @@ namespace HappyTravel.Gifu.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Supplier")
-                        .HasColumnType("integer");
-
                     b.Property<string>("UniqueId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("VccVendor")
+                        .HasColumnType("integer");
 
                     b.HasKey("TransactionId");
 

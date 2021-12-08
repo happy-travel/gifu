@@ -1,5 +1,4 @@
 ﻿using CSharpFunctionalExtensions;
-using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Data.Models;
@@ -28,29 +27,8 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
         {
             _logger.LogVccIssueRequestStarted(request.ReferenceCode, request.MoneyAmount.Amount, request.MoneyAmount.Currency.ToString());
 
-            return await ValidateRequest()
-                .Bind(() => _serviceResolver.ResolveServiceByCurrency(request.MoneyAmount.Currency))
+            return await _serviceResolver.ResolveServiceByCurrency(request.MoneyAmount.Currency)
                 .Bind(vccService => vccService.Issue(request, clientId, cancellationToken));
-
-            async Task<Result> ValidateRequest()
-            {
-                var validator = new InlineValidator<VccIssueRequest>();
-                var today = DateTime.UtcNow.Date;
-
-                validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
-                validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
-                validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
-                validator.RuleFor(r => r.ReferenceCode)
-                    .NotEmpty()
-                    .MustAsync(async (referenceCode, _) => !await _vccRecordsManager.IsIssued(referenceCode))
-                    .WithMessage($"VCC for '{request.ReferenceCode}' already issued");
-
-                var result = await validator.ValidateAsync(request, cancellationToken);
-
-                return result.IsValid
-                    ? Result.Success()
-                    : Result.Failure(result.ToString(";"));
-            }
         }
 
 
@@ -112,7 +90,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
 
         private Result<(VccIssue, IVccSupplierService)> GetVccService(VccIssue vcc)
         {
-            var (isSuccess, _, service, error) = _serviceResolver.ResolveServiceBySupplierCode(vcc.Supplier);
+            var (isSuccess, _, service, error) = _serviceResolver.ResolveServiceByVccVendor(vcc.VccVendor);
 
             return isSuccess
                 ? (vcc, service)

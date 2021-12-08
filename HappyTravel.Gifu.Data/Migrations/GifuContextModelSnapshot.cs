@@ -107,12 +107,12 @@ namespace HappyTravel.Gifu.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Supplier")
-                        .HasColumnType("integer");
-
                     b.Property<string>("UniqueId")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("VccVendor")
+                        .HasColumnType("integer");
 
                     b.HasKey("TransactionId");
 

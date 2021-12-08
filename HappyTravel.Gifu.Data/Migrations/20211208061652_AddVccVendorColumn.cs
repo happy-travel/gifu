@@ -2,24 +2,24 @@
 
 namespace HappyTravel.Gifu.Data.Migrations
 {
-    public partial class AddVccSupplierColumn : Migration
+    public partial class AddVccVendorColumn : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
-                name: "Supplier",
+                name: "VccVendor",
                 table: "VccIssues",
                 type: "integer",
                 nullable: false,
                 defaultValue: 0);
 
-            migrationBuilder.Sql(@"UPDATE ""VccIssues"" SET ""Supplier"" = 1");
+            migrationBuilder.Sql(@"UPDATE ""VccIssues"" SET ""VccVendor"" = 1");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Supplier",
+                name: "VccVendor",
                 table: "VccIssues");
         }
     }

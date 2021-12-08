@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
+using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
@@ -34,9 +35,31 @@ namespace HappyTravel.Gifu.Api.Services
 
         public async Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
         {           
-            return await _accountsService.GetAccountId(request.MoneyAmount.Currency)
+            return await ValidateRequest()
+                .Bind(() => _accountsService.GetAccountId(request.MoneyAmount.Currency))
                 .Bind(CreateCard)
                 .Finally(SaveResult);
+
+
+            async Task<Result> ValidateRequest()
+            {
+                var validator = new InlineValidator<VccIssueRequest>();
+                var today = DateTime.UtcNow.Date;
+
+                validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
+                validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
+                validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
+                validator.RuleFor(r => r.ReferenceCode)
+                    .NotEmpty()
+                    .MustAsync(async (referenceCode, _) => !await _vccRecordsManager.IsIssued(referenceCode))
+                    .WithMessage($"A VCC for '{request.ReferenceCode}' was already issued");
+
+                var result = await validator.ValidateAsync(request, cancellationToken);
+
+                return result.IsValid
+                    ? Result.Success()
+                    : Result.Failure(result.ToString(";"));
+            }
 
 
             async Task<Result<(string, string, VirtualCreditCard)>> CreateCard(string accountId)
@@ -81,7 +104,7 @@ namespace HappyTravel.Gifu.Api.Services
                     Created = now,
                     Modified = now,
                     Status = VccStatuses.Issued,
-                    Supplier = VccSuppliers.AmEx
+                    VccVendor = VccVendors.AmericanExpress
                 });
                 
                 _logger.LogVccIssueRequestSuccess(request.ReferenceCode, result.Value.UniqueId);
@@ -113,7 +136,7 @@ namespace HappyTravel.Gifu.Api.Services
                 }
                 
                 _logger.LogVccDeleteRequestFailure(Vcc.ReferenceCode, err);
-                return Result.Failure<VccIssue>($"Deleting VCC for `{Vcc.ReferenceCode}` failed");
+                return Result.Failure<VccIssue>($"Deletion of a VCC for `{Vcc.ReferenceCode}` has failed");
             }
 
 

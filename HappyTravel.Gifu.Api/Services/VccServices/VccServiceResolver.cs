@@ -23,15 +23,15 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
             if (_options.AmexCurrencies.Contains(currency))
                 return GetService(typeof(AmExService));
 
-            return Result.Failure<IVccSupplierService>(string.Format($"Unable to issue VCC for currency `{currency}`"));
+            return GetService(typeof(AmExService)); // AmExService is used by default.
         }
 
 
-        public Result<IVccSupplierService> ResolveServiceBySupplierCode(VccSuppliers supplierCode)
-            => supplierCode switch
+        public Result<IVccSupplierService> ResolveServiceByVccVendor(VccVendors vccVendor)
+            => vccVendor switch
             {
-                VccSuppliers.AmEx => GetService(typeof(AmExService)),                
-                _ => Result.Failure<IVccSupplierService>(string.Format($"Unable to issue VCC for supplier `{supplierCode}`"))
+                VccVendors.AmericanExpress => GetService(typeof(AmExService)),                
+                _ => Result.Failure<IVccSupplierService>(string.Format($"Unable to issue a VCC for VccVendor `{vccVendor}`"))
             };
 
 
