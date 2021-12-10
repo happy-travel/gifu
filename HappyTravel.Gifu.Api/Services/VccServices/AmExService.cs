@@ -80,7 +80,7 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
             
-            async Task<Result<VirtualCreditCard>> SaveResult(Result<(string TransactionId, string UniqueId, VirtualCreditCard Vcc)> result)
+            async Task<Result<VirtualCreditCard>> SaveResult(Result<(string TransactionId, string UniqueId, VirtualCreditCard vcc)> result)
             {
                 if (result.IsFailure)
                 {
@@ -100,7 +100,7 @@ namespace HappyTravel.Gifu.Api.Services
                     ActivationDate = request.ActivationDate,
                     DueDate = request.DueDate,
                     ClientId = clientId,
-                    CardNumber = result.Value.Vcc.Number,
+                    CardNumber = result.Value.vcc.Number,
                     Created = now,
                     Modified = now,
                     Status = VccStatuses.Issued,
@@ -108,51 +108,51 @@ namespace HappyTravel.Gifu.Api.Services
                 });
                 
                 _logger.LogVccIssueRequestSuccess(request.ReferenceCode, result.Value.UniqueId);
-                return result.Value.Vcc;
+                return result.Value.vcc;
             }
         }
 
 
-        public async Task<Result> Delete(VccIssue Vcc)
+        public async Task<Result> Remove(VccIssue vcc)
         {
-            return await GetAccountId(Vcc)
-                .Bind(DeleteCard)
+            return await GetAccountId(vcc)
+                .Bind(RemoveCard)
                 .Map(Save);
 
 
-            async Task<Result<VccIssue>> DeleteCard(string AccountId)
+            async Task<Result<VccIssue>> RemoveCard(string AccountId)
             {                
                 var payload = new DeleteRequest
                 {
-                    TokenReferenceId = Vcc.UniqueId,
+                    TokenReferenceId = vcc.UniqueId,
                     BillingAccountId = AccountId
                 };
 
-                var (isSuccess, _, _, err) = await _client.Delete(payload);
+                var (isSuccess, _, _, err) = await _client.Remove(payload);
                 if (isSuccess)
                 {
-                    _logger.LogVccDeleteRequestSuccess(Vcc.ReferenceCode);
-                    return Vcc;
+                    _logger.LogVccDeleteRequestSuccess(vcc.ReferenceCode);
+                    return vcc;
                 }
                 
-                _logger.LogVccDeleteRequestFailure(Vcc.ReferenceCode, err);
-                return Result.Failure<VccIssue>($"Deletion of a VCC for `{Vcc.ReferenceCode}` has failed");
+                _logger.LogVccDeleteRequestFailure(vcc.ReferenceCode, err);
+                return Result.Failure<VccIssue>($"Deletion of a VCC for `{vcc.ReferenceCode}` has failed");
             }
 
 
             Task Save(VccIssue vcc)
-                => _vccRecordsManager.Delete(vcc);
+                => _vccRecordsManager.Remove(vcc);
         }
 
         
-        public async Task<Result> ModifyAmount(VccIssue Vcc, MoneyAmount amount)
+        public async Task<Result> DecreaseAmount(VccIssue Vcc, MoneyAmount amount)
         {
             return await GetAccountId(Vcc)
-                .Bind(ModifyCardAmount)
+                .Bind(DecreaseCardAmount)
                 .Map(SaveHistory);
 
 
-            async Task<Result<VccIssue>> ModifyCardAmount(string AccountId)
+            async Task<Result<VccIssue>> DecreaseCardAmount(string AccountId)
             {                
                 var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: Vcc.CardNumber,
                     accountId: AccountId,
@@ -160,7 +160,7 @@ namespace HappyTravel.Gifu.Api.Services
                     tokenStartDate: null,
                     tokenDueDate: null);
                 
-                var (isSuccess, _, _, err) = await _client.Edit(payload);
+                var (isSuccess, _, _, err) = await _client.Update(payload);
 
                 if (isSuccess)
                 {
@@ -174,22 +174,21 @@ namespace HappyTravel.Gifu.Api.Services
 
 
             Task SaveHistory(VccIssue vcc)
-                => _vccRecordsManager.ModifyAmount(vcc, amount.Amount);
+                => _vccRecordsManager.DecreaseAmount(vcc, amount.Amount);
         }
         
         
-        public async Task<Result> Edit(VccIssue Vcc, VccEditRequest request, string clientId)
+        public async Task<Result> Update(VccIssue vcc, VccEditRequest request, string clientId)
         {
-            return await IsDirectEditEnabled()
-                .Bind(Validate)
-                .Bind(GetAccountId)
-                .Bind(EditCard)
+            return await IsDirectEditEnabled()               
+                .Bind(() => GetAccountId(vcc))
+                .Bind(UpdateCard)
                 .Map(SaveRequest);
 
 
             Result IsDirectEditEnabled()
             {
-                _logger.LogVccEditRequestStarted(Vcc.ReferenceCode);
+                _logger.LogVccEditRequestStarted(vcc.ReferenceCode);
 
                 return _directEditOptionsMonitor.CurrentValue.IsEnabled
                     ? Result.Success()
@@ -197,40 +196,28 @@ namespace HappyTravel.Gifu.Api.Services
             }
 
 
-            Result<VccIssue> Validate()
+            async Task<Result> UpdateCard(string AccountId)
             {
-                if (request.ActivationDate is null && request.DueDate is null && request.MoneyAmount is null)
-                    return Result.Failure<VccIssue>("At least one field must be filled");
-
-                if (request.MoneyAmount is not null && request.MoneyAmount.Value.Currency != Vcc.Currency)
-                    return Result.Failure<VccIssue>("Currency does not match with VCC currency");
-
-                return Vcc;
-            }
-
-
-            async Task<Result> EditCard(string AccountId)
-            {
-                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: Vcc.CardNumber,
+                var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
                     accountId: AccountId,
                     tokenAmount: request.MoneyAmount,
                     tokenStartDate: request.ActivationDate,
                     tokenDueDate: request.DueDate);
 
-                var (isSuccess, _, _, err) = await _client.Edit(payload);
+                var (isSuccess, _, _, err) = await _client.Update(payload);
 
                 if (isSuccess)
                 {
-                    _logger.LogVccEditSuccess(Vcc.ReferenceCode);
+                    _logger.LogVccEditSuccess(vcc.ReferenceCode);
                 }
                 
-                _logger.LogVccEditFailure(Vcc.ReferenceCode, err);
-                return Result.Failure($"Modifying VCC for `{Vcc.ReferenceCode}` failed");
+                _logger.LogVccEditFailure(vcc.ReferenceCode, err);
+                return Result.Failure($"Modifying VCC for `{vcc.ReferenceCode}` failed");
             }
 
 
             Task SaveRequest()
-                => _vccRecordsManager.Edit(Vcc, request);
+                => _vccRecordsManager.Update(vcc, request);
         }
         
         

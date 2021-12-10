@@ -50,9 +50,9 @@ namespace HappyTravel.Gifu.Api.Controllers
         /// Delete virtual card
         /// </summary>
         [HttpDelete("{referenceCode}")]
-        public async Task<IActionResult> Delete(string referenceCode)
+        public async Task<IActionResult> Remove(string referenceCode)
         {
-            var (isSuccess, _, error) = await _vccService.Delete(referenceCode);
+            var (isSuccess, _, error) = await _vccService.Remove(referenceCode);
             return isSuccess
                 ? Ok()
                 : BadRequest(new ProblemDetails {Detail = error});
@@ -63,9 +63,9 @@ namespace HappyTravel.Gifu.Api.Controllers
         /// Modify card amount
         /// </summary>
         [HttpPut("{referenceCode}")]
-        public async Task<IActionResult> ModifyAmount(string referenceCode, [FromBody] MoneyAmount amount)
+        public async Task<IActionResult> DecreaseAmount(string referenceCode, [FromBody] MoneyAmount amount)
         {
-            var (isSuccess, _, error) = await _vccService.ModifyAmount(referenceCode, amount);
+            var (isSuccess, _, error) = await _vccService.DecreaseAmount(referenceCode, amount);
             return isSuccess
                 ? Ok()
                 : BadRequest(new ProblemDetails {Detail = error});

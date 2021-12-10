@@ -29,11 +29,11 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
         
-        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Delete(DeleteRequest payload) 
+        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Remove(DeleteRequest payload) 
             => await Task.FromResult((string.Empty, new TokenIssuanceData()));
 
         
-        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Edit(ModifyRequest payload) 
+        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload) 
             => await Task.FromResult((string.Empty, new TokenIssuanceData()));
     }
 }

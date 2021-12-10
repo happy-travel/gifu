@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -31,11 +30,11 @@ namespace HappyTravel.Gifu.Api.Services.SupplierClients
             => SendRequest(HttpMethod.Post, payload);
 
 
-        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Delete(DeleteRequest payload) 
+        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Remove(DeleteRequest payload) 
             => SendRequest(HttpMethod.Delete, payload);
 
 
-        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Edit(ModifyRequest payload)
+        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload)
             => SendRequest(HttpMethod.Put, payload);
 
 

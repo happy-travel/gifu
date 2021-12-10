@@ -6,18 +6,18 @@ namespace HappyTravel.Gifu.Api.Services
 {
     public static class VccIssueExtensions
     {
-        public static IEnumerable<VccIssue> TrimCardNumbers(this List<VccIssue> vccIssues)
-            => vccIssues.Select(v => v.TrimCardNumber());
+        public static IEnumerable<VccIssue> MaskCardNumbers(this List<VccIssue> vccIssues)
+            => vccIssues.Select(v => v.MaskCardNumber());
         
         
-        private static VccIssue TrimCardNumber(this VccIssue vccIssue)
+        private static VccIssue MaskCardNumber(this VccIssue vccIssue)
         {
-            vccIssue.CardNumber = TrimCardNumber(vccIssue.CardNumber);
+            vccIssue.CardNumber = MaskCardNumber(vccIssue.CardNumber);
             return vccIssue;
         }
 
 
-        private static string TrimCardNumber(string cardNumber)
+        private static string MaskCardNumber(string cardNumber)
         {
             if (string.IsNullOrEmpty(cardNumber))
                 return cardNumber;

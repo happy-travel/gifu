@@ -3,8 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
-using HappyTravel.Gifu.Api.Models;
-using HappyTravel.Gifu.Api.Models.AmEx;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
 using HappyTravel.Gifu.Api.Services.VccServices;

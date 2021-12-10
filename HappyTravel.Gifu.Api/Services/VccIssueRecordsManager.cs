@@ -44,7 +44,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
 
-        public Task Delete(VccIssue vccIssue)
+        public Task Remove(VccIssue vccIssue)
         {
             vccIssue.Modified = DateTime.UtcNow;
             vccIssue.Status = VccStatuses.Deleted;
@@ -53,7 +53,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
 
-        public Task Edit(VccIssue vccIssue, VccEditRequest changes)
+        public Task Update(VccIssue vccIssue, VccEditRequest changes)
         {
             var now = DateTime.UtcNow;
             vccIssue.Modified = now;
@@ -79,7 +79,7 @@ namespace HappyTravel.Gifu.Api.Services
         }
 
 
-        public Task ModifyAmount(VccIssue vccIssue, decimal amount)
+        public Task DecreaseAmount(VccIssue vccIssue, decimal amount)
         {
             var now = DateTime.UtcNow;
             var amountBefore = vccIssue.Amount;

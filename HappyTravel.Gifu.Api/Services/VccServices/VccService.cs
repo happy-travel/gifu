@@ -33,31 +33,31 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
 
 
         public async Task<List<VccIssue>> GetCardsInfo(List<string> referenceCodes, CancellationToken cancellationToken)
-            => (await _vccRecordsManager.Get(referenceCodes)).TrimCardNumbers().ToList();
+            => (await _vccRecordsManager.Get(referenceCodes)).MaskCardNumbers().ToList();
 
 
-        public async Task<Result> Delete(string referenceCode)
+        public async Task<Result> Remove(string referenceCode)
         {
             _logger.LogVccDeleteRequestStarted(referenceCode);
 
             return await _vccRecordsManager.Get(referenceCode)
                 .Bind(GetVccService)
-                .Bind(DeleteCard);
+                .Bind(RemoveCard);
             
 
-            Task<Result> DeleteCard((VccIssue Vcc, IVccSupplierService vccService) result)
-                => result.vccService.Delete(result.Vcc);
+            Task<Result> RemoveCard((VccIssue Vcc, IVccSupplierService vccService) result)
+                => result.vccService.Remove(result.Vcc);
         }
 
 
-        public async Task<Result> ModifyAmount(string referenceCode, MoneyAmount amount)
+        public async Task<Result> DecreaseAmount(string referenceCode, MoneyAmount amount)
         {
             _logger.LogVccModifyAmountRequestStarted(referenceCode, amount.Amount);
 
             return await _vccRecordsManager.Get(referenceCode)
                 .Bind(ValidateRequest)
                 .Bind(GetVccService)
-                .Bind(ModifyCardAmount);
+                .Bind(DecreaseCardAmount);
 
             Result<VccIssue> ValidateRequest(VccIssue vcc)
             {
@@ -71,20 +71,33 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
             }
 
 
-            Task<Result> ModifyCardAmount((VccIssue Vcc, IVccSupplierService vccService) result)
-                => result.vccService.ModifyAmount(result.Vcc, amount);
+            Task<Result> DecreaseCardAmount((VccIssue Vcc, IVccSupplierService vccService) result)
+                => result.vccService.DecreaseAmount(result.Vcc, amount);
         }
 
 
-        public async Task<Result> Edit(string referenceCode, VccEditRequest request, string clientId)
+        public async Task<Result> Update(string referenceCode, VccEditRequest request, string clientId)
         {
             return await _vccRecordsManager.Get(referenceCode)
+                .Bind(ValidateRequest)
                 .Bind(GetVccService)
-                .Bind(EditCard);
+                .Bind(UpdateCard);
 
 
-            Task<Result> EditCard((VccIssue Vcc, IVccSupplierService vccService) result)
-                => result.vccService.Edit(result.Vcc, request, clientId);
+            Result<VccIssue> ValidateRequest(VccIssue vcc)
+            {
+                if (request.ActivationDate is null && request.DueDate is null && request.MoneyAmount is null)
+                    return Result.Failure<VccIssue>("At least one field must be filled");
+
+                if (request.MoneyAmount is not null && request.MoneyAmount.Value.Currency != vcc.Currency)
+                    return Result.Failure<VccIssue>("Currency does not match with VCC currency");
+
+                return vcc;
+            }
+
+
+            Task<Result> UpdateCard((VccIssue Vcc, IVccSupplierService vccService) result)
+                => result.vccService.Update(result.Vcc, request, clientId);
         }
 
 
