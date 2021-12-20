@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -15,7 +14,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace HappyTravel.Gifu.Api.Services
+namespace HappyTravel.Gifu.Api.Services.SupplierClients
 {
     public class AmExClient : IAmExClient
     {
@@ -31,11 +30,11 @@ namespace HappyTravel.Gifu.Api.Services
             => SendRequest(HttpMethod.Post, payload);
 
 
-        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Delete(DeleteRequest payload) 
+        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Remove(DeleteRequest payload) 
             => SendRequest(HttpMethod.Delete, payload);
 
 
-        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Edit(ModifyRequest payload)
+        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload)
             => SendRequest(HttpMethod.Put, payload);
 
 

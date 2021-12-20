@@ -5,6 +5,7 @@ using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data;
 using HappyTravel.StdOutLogger.Extensions;
 using HappyTravel.Telemetry.Extensions;
@@ -72,7 +73,10 @@ namespace HappyTravel.Gifu.Api
                 .ConfigureSwagger()
                 .ConfigureDatabaseOptions(vaultClient, Configuration)
                 .ConfigureAuthentication(vaultClient, Configuration)
-                .ConfigureIssuer(vaultClient, Configuration)
+                .ConfigureAmExIssuer(vaultClient, Configuration)                
+                .ConfigureVccServiceResolver()
+                .AddTransient<VccServiceResolver>()
+                .AddTransient<IVccService, VccService>()
                 .AddTransient<IClientService, ClientService>()
                 .AddTransient<ICustomFieldsMapper, CustomFieldsMapper>()
                 .AddTransient<IVccIssueRecordsManager, VccIssueRecordsManager>()

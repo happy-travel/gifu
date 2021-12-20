@@ -12,8 +12,8 @@ namespace HappyTravel.Gifu.Api.Services
         Task<Result<VccIssue>> Get(string referenceCode);
         Task<List<VccIssue>> Get(List<string> referenceCodes);
         Task<bool> IsIssued(string referenceCode);
-        Task Delete(VccIssue vccIssue);
-        Task Edit(VccIssue vccIssue, VccEditRequest changes);
-        Task ModifyAmount(VccIssue vccIssue, decimal amount);
+        Task Remove(VccIssue vccIssue);
+        Task Update(VccIssue vccIssue, VccEditRequest changes);
+        Task DecreaseAmount(VccIssue vccIssue, decimal amount);
     }
 }

@@ -12,12 +12,12 @@
             <param name="cancellationToken">Cancellation token</param>
             <returns>Virtual credit card info</returns>
         </member>
-        <member name="M:HappyTravel.Gifu.Api.Controllers.CardsController.Delete(System.String)">
+        <member name="M:HappyTravel.Gifu.Api.Controllers.CardsController.Remove(System.String)">
             <summary>
             Delete virtual card
             </summary>
         </member>
-        <member name="M:HappyTravel.Gifu.Api.Controllers.CardsController.ModifyAmount(System.String,HappyTravel.Money.Models.MoneyAmount)">
+        <member name="M:HappyTravel.Gifu.Api.Controllers.CardsController.DecreaseAmount(System.String,HappyTravel.Money.Models.MoneyAmount)">
             <summary>
             Modify card amount
             </summary>
