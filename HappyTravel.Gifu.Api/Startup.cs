@@ -5,6 +5,7 @@ using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Api.Services.SupplierServices.IxarisServices;
 using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data;
 using HappyTravel.StdOutLogger.Extensions;
@@ -73,7 +74,8 @@ namespace HappyTravel.Gifu.Api
                 .ConfigureSwagger()
                 .ConfigureDatabaseOptions(vaultClient, Configuration)
                 .ConfigureAuthentication(vaultClient, Configuration)
-                .ConfigureAmExIssuer(vaultClient, Configuration)                
+                .ConfigureAmExIssuer(vaultClient, Configuration)  
+                .ConfigureIxarisIssuer(vaultClient, Configuration)
                 .ConfigureVccServiceResolver()
                 .AddTransient<VccServiceResolver>()
                 .AddTransient<IVccService, VccService>()
@@ -81,6 +83,8 @@ namespace HappyTravel.Gifu.Api
                 .AddTransient<ICustomFieldsMapper, CustomFieldsMapper>()
                 .AddTransient<IVccIssueRecordsManager, VccIssueRecordsManager>()
                 .AddTransient<IAccountsService, AccountService>()
+                .AddTransient<IVccFactoryNameService, VccFactoryNameService>()
+                .AddTransient<IScheduleLoadRecordsManager, ScheduleLoadRecordsManager>()
                 .AddTracing(Configuration, options =>
                 {
                     options.ServiceName = $"{HostEnvironment.ApplicationName}-{HostEnvironment.EnvironmentName}";

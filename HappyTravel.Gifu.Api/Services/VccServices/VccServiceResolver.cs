@@ -23,6 +23,10 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
             if (_options.AmexCurrencies.Contains(currency))
                 return GetService(typeof(AmExService));
 
+            // Not used yet
+            //if (_options.IxarisCurrencies.Contains(currency))
+            //    return GetService(typeof(IxarisService));
+
             return GetService(typeof(AmExService)); // AmExService is used by default.
         }
 
