@@ -142,7 +142,9 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
             return services.Configure<VccServiceResolverOptions>(o =>
             {
                 o.AmexCurrencies = new() { Currencies.AED, Currencies.USD };
+                o.AmexCreditCardTypes = new() { CreditCardTypes.AmericanExpress };
                 o.IxarisCurrencies = new() { Currencies.EUR };
+                o.IxarisCreditCardTypes = new() { CreditCardTypes.Visa, CreditCardTypes.MasterCard };
             });
         }
 

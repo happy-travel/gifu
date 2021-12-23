@@ -27,7 +27,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
         {
             _logger.LogVccIssueRequestStarted(request.ReferenceCode, request.MoneyAmount.Amount, request.MoneyAmount.Currency.ToString());
 
-            return await _serviceResolver.ResolveServiceByCurrency(request.MoneyAmount.Currency)
+            return await _serviceResolver.ResolveService(request.Types, request.MoneyAmount.Currency)
                 .Bind(vccService => vccService.Issue(request, clientId, cancellationToken));
         }
 

@@ -8,6 +8,6 @@ namespace HappyTravel.Gifu.Api.Services.SupplierServices.IxarisServices
     {
         Task Add(IxarisScheduleLoad ixarisScheduleLoad);
         Task<Result<IxarisScheduleLoad>> Get(string cardReference);
-        Task Cancel(IxarisScheduleLoad ixarisScheduleLoad);
+        Task SetCancelled(IxarisScheduleLoad ixarisScheduleLoad);
     }
 }

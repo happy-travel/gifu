@@ -12,8 +12,6 @@ namespace HappyTravel.Gifu.Api.Models.Ixaris.Request
         public string? FundingAccountReference { get; init; }
 
         [JsonPropertyName("amount")]
-        public decimal? Amount { get; init; }
-
-        //public string? ExternalIdentifier { get; init; }        
+        public decimal? Amount { get; init; }     
     }
 }

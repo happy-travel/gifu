@@ -83,7 +83,7 @@ namespace HappyTravel.Gifu.Api
                 .AddTransient<ICustomFieldsMapper, CustomFieldsMapper>()
                 .AddTransient<IVccIssueRecordsManager, VccIssueRecordsManager>()
                 .AddTransient<IAccountsService, AccountService>()
-                .AddTransient<IVccFactoryNameService, VccFactoryNameService>()
+                .AddTransient<IVccFactoryService, VccFactoryService>()
                 .AddTransient<IScheduleLoadRecordsManager, ScheduleLoadRecordsManager>()
                 .AddTracing(Configuration, options =>
                 {

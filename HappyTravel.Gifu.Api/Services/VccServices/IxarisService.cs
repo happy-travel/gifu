@@ -13,6 +13,7 @@ using HappyTravel.Money.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,7 +22,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
     public class IxarisService : IVccSupplierService
     {   
         public IxarisService(IIxarisClient client, ILogger<IxarisService> logger, IVccIssueRecordsManager vccRecordsManager, 
-            IOptions<IxarisOptions> options, IVccFactoryNameService vccFactoryNameService, IScheduleLoadRecordsManager scheduleLoadRecordsManager)
+            IOptions<IxarisOptions> options, IVccFactoryService vccFactoryNameService, IScheduleLoadRecordsManager scheduleLoadRecordsManager)
         {            
             _client = client;
             _logger = logger;
@@ -36,7 +37,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
         {
             return await ValidateRequest()
                 .Bind(() => Login())
-                .Bind(() => _vccFactoryNameService.GetVccFactoryName(request.Type))
+                .Bind(() => _vccFactoryNameService.GetVccFactory(request.Types))
                 .Bind(CreateCard)
                 .Bind(GetCardDetails)
                 .Bind(ScheduleLoadCard)
@@ -64,7 +65,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
             }
 
 
-            async Task<Result<IssueVcc>> CreateCard(string vccFactoryName)
+            async Task<Result<(IssueVcc, CreditCardTypes)>> CreateCard(KeyValuePair<CreditCardTypes, string> vccFactory)
             {
                 var issueVccRequest = new IssueVccRequest()
                 {
@@ -73,30 +74,35 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
                     Amount = request.MoneyAmount.Amount
                 };
 
-                var (isSuccess, _, data, error) = await _client.IssueVirtualCard(_securityToken, vccFactoryName, issueVccRequest);
+                var (isSuccess, _, data, error) = await _client.IssueVirtualCard(_securityToken, vccFactory.Value, issueVccRequest);
 
                 if (isSuccess)
                 {
                     _logger.LogVccIssueRequestSuccess(request.ReferenceCode, data.CardReference);
-                    return data;
+                    return (data, vccFactory.Key);
                 }
 
                 _logger.LogVccIssueRequestFailure(request.ReferenceCode, error);
-                return Result.Failure<IssueVcc>($"Error creating VCC for reference code `{request.ReferenceCode}`");
+                return Result.Failure<(IssueVcc, CreditCardTypes)>($"Error creating VCC for reference code `{request.ReferenceCode}`");
             }
 
 
-            async Task<Result<(string, VccDetails)>> GetCardDetails(IssueVcc issueVccResponse)
+            async Task<Result<(string, VccDetails, VirtualCreditCard)>> GetCardDetails((IssueVcc IssueVcc, CreditCardTypes VccType) result)
             {   
-                var (isSuccess, _, data, error) = await _client.GetVirtualCardDetails(_securityToken, issueVccResponse.CardReference);
+                var (isSuccess, _, response, error) = await _client.GetVirtualCardDetails(_securityToken, result.IssueVcc.CardReference);
 
                 return isSuccess
-                    ? (issueVccResponse.TransactionReference, data)
-                    : Result.Failure<(string, VccDetails)>(error);
+                    ? (result.IssueVcc.TransactionReference, response,
+                        new(number: response.CardNumber,
+                        expiry: new(int.Parse(response.ExpiryDateYear), int.Parse(response.ExpiryDateMonth), 1),
+                        holder: response.CardholderName,
+                        code: response.Cvv,
+                        type: result.VccType))
+                    : Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
             }
 
 
-            async Task<Result<(string, VccDetails)>> ScheduleLoadCard((string TransactionReference, VccDetails VccDetails) result)
+            async Task<Result<(string, VccDetails, VirtualCreditCard)>> ScheduleLoadCard((string TransactionId, VccDetails VccDetails, VirtualCreditCard Vcc) result)
             {
                 var scheduleLoadRequest = new ScheduleLoadRequest()
                 {
@@ -124,28 +130,28 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
 
                     await _scheduleLoadRecordsManager.Add(scheduleLoad);
 
-                    return (result.TransactionReference, result.VccDetails);
+                    return (result.TransactionId, result.VccDetails, result.Vcc);
                 }
 
-                return Result.Failure<(string, VccDetails)>(error);
+                return Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
             }
 
 
-            async Task<Result<VirtualCreditCard>> SaveResult((string TransactionId, VccDetails VccCardDetails) result)
+            async Task<Result<VirtualCreditCard>> SaveResult((string TransactionId, VccDetails VccDetails, VirtualCreditCard Vcc) result)
             {
                 var now = DateTime.UtcNow;
 
                 var vccIssue = new VccIssue
                 {
                     TransactionId = result.TransactionId,
-                    UniqueId = result.VccCardDetails.CardReference,
+                    UniqueId = result.VccDetails.CardReference,
                     ReferenceCode = request.ReferenceCode,
                     Amount = request.MoneyAmount.Amount,
                     Currency = request.MoneyAmount.Currency,
-                    ActivationDate = new(int.Parse(result.VccCardDetails.StartDateYear), int.Parse(result.VccCardDetails.StartDateMonth), 1),
-                    DueDate = new(int.Parse(result.VccCardDetails.ExpiryDateYear), int.Parse(result.VccCardDetails.ExpiryDateMonth), 1),
+                    ActivationDate = new(int.Parse(result.VccDetails.StartDateYear), int.Parse(result.VccDetails.StartDateMonth), 1),
+                    DueDate = result.Vcc.Expiry,
                     ClientId = clientId,
-                    CardNumber = result.VccCardDetails.CardNumber,
+                    CardNumber = result.VccDetails.CardNumber,
                     Created = now,
                     Modified = now,
                     Status = VccStatuses.Issued,
@@ -153,12 +159,8 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
                 };
 
                 await _vccRecordsManager.Add(vccIssue);
-                                
-                return new VirtualCreditCard(number: vccIssue.CardNumber,
-                        expiry: vccIssue.DueDate,
-                        holder: result.VccCardDetails.CardholderName,
-                        code: result.VccCardDetails.Cvv,
-                        type: request.Type ?? _options.DefaultVccType);
+
+                return result.Vcc;
             }
         }
 
@@ -230,7 +232,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
 
         public Task<Result> Update(VccIssue Vcc, VccEditRequest request, string clientId)
         {
-            return Task.Run(() => Result.Failure("VCC editing is not available for Ixaris suppler"));
+            return Task.FromResult(Result.Failure("VCC editing is not available for Ixaris suppler"));
         }
 
 
@@ -253,7 +255,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
         private readonly ILogger<IxarisService> _logger;
         private readonly IVccIssueRecordsManager _vccRecordsManager;
         private readonly IxarisOptions _options;
-        private readonly IVccFactoryNameService _vccFactoryNameService;
+        private readonly IVccFactoryService _vccFactoryNameService;
         private readonly IScheduleLoadRecordsManager _scheduleLoadRecordsManager;
     }
 }

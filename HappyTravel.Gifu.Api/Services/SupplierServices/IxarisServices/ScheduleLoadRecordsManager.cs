@@ -31,7 +31,7 @@ namespace HappyTravel.Gifu.Api.Services.SupplierServices.IxarisServices
         }
 
 
-        public Task Cancel(IxarisScheduleLoad ixarisScheduleLoad)
+        public Task SetCancelled(IxarisScheduleLoad ixarisScheduleLoad)
         {
             ixarisScheduleLoad.Modified = DateTime.Now;
             ixarisScheduleLoad.Status = IxarisScheduleLoadStatuses.Canceled;
