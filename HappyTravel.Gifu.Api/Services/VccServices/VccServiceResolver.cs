@@ -1,5 +1,6 @@
 ﻿using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
+using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Money.Enums;
 using Microsoft.Extensions.Options;
@@ -18,12 +19,32 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
         }
 
 
+        public Result<IVccSupplierService> ResolveService(List<CreditCardTypes>? types, Currencies currency)
+        {
+            if (types is null)
+                return ResolveServiceByCurrency(currency);
+
+            if (_options.AmexCurrencies.Contains(currency) && _options.AmexCreditCardTypes.Any(type => types.Contains(type)))
+                return GetService(typeof(AmExService));
+
+            // Not used yet
+            //if (_options.IxarisCurrencies.Contains(currency) && _options.IxarisCreditCardTypes.Any(type => types.Contains(type)))
+            //    return GetService(typeof(IxarisService));
+
+            return Result.Failure<IVccSupplierService>($"Unable to issue a VCC for currency `{currency}` and VccVendors `{string.Join(", ", types)}`");
+        }
+
+
         public Result<IVccSupplierService> ResolveServiceByCurrency(Currencies currency)
         {
             if (_options.AmexCurrencies.Contains(currency))
                 return GetService(typeof(AmExService));
 
-            return GetService(typeof(AmExService)); // AmExService is used by default.
+            // Not used yet
+            //if (_options.IxarisCurrencies.Contains(currency))
+            //    return GetService(typeof(IxarisService));
+
+            return Result.Failure<IVccSupplierService>($"Unable to issue a VCC for currency `{currency}`");
         }
 
 
@@ -31,7 +52,7 @@ namespace HappyTravel.Gifu.Api.Services.VccServices
             => vccVendor switch
             {
                 VccVendors.AmericanExpress => GetService(typeof(AmExService)),                
-                _ => Result.Failure<IVccSupplierService>(string.Format($"Unable to issue a VCC for VccVendor `{vccVendor}`"))
+                _ => Result.Failure<IVccSupplierService>($"Unable to issue a VCC for VccVendor `{vccVendor}`")
             };
 
 

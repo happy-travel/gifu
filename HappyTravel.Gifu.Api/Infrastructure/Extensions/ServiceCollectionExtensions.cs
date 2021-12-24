@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
+using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
 using HappyTravel.Gifu.Api.Services.VccServices;
@@ -102,11 +103,48 @@ namespace HappyTravel.Gifu.Api.Infrastructure.Extensions
         }
 
 
+        public static IServiceCollection ConfigureIxarisIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
+        {
+            var ixarisOptions = vaultClient.Get(configuration["IxarisOptions"])
+                .GetAwaiter().GetResult();
+
+            services.AddHttpClient<IIxarisClient, IxarisClient>()
+                .AddHttpClientRequestLogging(configuration);
+
+            var ixarisAccount = vaultClient.Get(configuration["IxarisAccount"])
+                .GetAwaiter().GetResult();
+
+            var ixarisVccFactoryNames = vaultClient.Get(configuration["IxarisVccFactoryNames"])
+                .GetAwaiter().GetResult();
+
+            var vccFactoryNames = ixarisVccFactoryNames.Select(a => new
+                {
+                    CreditCardType = Enum.Parse<CreditCardTypes>(a.Key),
+                    VccFactoryName = a.Value
+                })
+                .ToDictionary(a => a.CreditCardType, a => a.VccFactoryName);
+
+            return services.Configure<IxarisOptions>(o =>
+                {
+                    o.Endpoint = ixarisOptions["endPoint"];
+                    o.ApiKey = ixarisOptions["apiKey"];
+                    o.Password = ixarisOptions["password"];
+                    o.Account = ixarisAccount["fundingAccountReference"];
+                    o.VccFactoryNames = vccFactoryNames;
+                    o.DefaultVccType = CreditCardTypes.Visa;
+                })
+                .AddScoped<IVccSupplierService, IxarisService>();
+        }
+
+
         public static IServiceCollection ConfigureVccServiceResolver(this IServiceCollection services)
         {
             return services.Configure<VccServiceResolverOptions>(o =>
             {
                 o.AmexCurrencies = new() { Currencies.AED, Currencies.USD };
+                o.AmexCreditCardTypes = new() { CreditCardTypes.AmericanExpress };
+                o.IxarisCurrencies = new() { Currencies.EUR };
+                o.IxarisCreditCardTypes = new() { CreditCardTypes.Visa, CreditCardTypes.MasterCard };
             });
         }
 

@@ -12,6 +12,7 @@ namespace HappyTravel.Gifu.Data
         public DbSet<VccIssue> VccIssues => Set<VccIssue>();
         public DbSet<AmountChangesHistory> AmountChangesHistories => Set<AmountChangesHistory>();
         public DbSet<VccDirectEditLog> VccDirectEditLogs => Set<VccDirectEditLog>();
+        public DbSet<IxarisScheduleLoad> IxarisScheduleLoads => Set<IxarisScheduleLoad>();
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
