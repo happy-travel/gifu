@@ -11,7 +11,7 @@ trigger:
 
 steps:
 - name: Test application
-  image: mcr.microsoft.com/dotnet/sdk:5.0-focal
+  image: mcr.microsoft.com/dotnet/sdk:6.0-focal
   environment:
     GITHUB_TOKEN:
       from_secret: GITHUB_TOKEN
@@ -49,7 +49,7 @@ trigger:
 
 steps:
 - name: Run migrations
-  image: mcr.microsoft.com/dotnet/sdk:5.0-focal
+  image: mcr.microsoft.com/dotnet/sdk:6.0-focal
   environment:
     GITHUB_TOKEN:
       from_secret: GITHUB_TOKEN
@@ -140,7 +140,7 @@ trigger:
 
 steps:
 - name: Run migrations
-  image: mcr.microsoft.com/dotnet/sdk:5.0-focal
+  image: mcr.microsoft.com/dotnet/sdk:6.0-focal
   environment:
     GITHUB_TOKEN:
       from_secret: GITHUB_TOKEN
