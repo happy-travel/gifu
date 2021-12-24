@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 
 ARG VAULT_TOKEN
 ARG BUILD_VERSION
@@ -11,7 +11,7 @@ ENV CONSUL_HTTP_TOKEN=$CONSUL_HTTP_TOKEN
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0-focal AS build
 ARG GITHUB_TOKEN
 WORKDIR /src
 COPY *.sln ./
