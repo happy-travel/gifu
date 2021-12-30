@@ -6,34 +6,33 @@ using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
 
-namespace HappyTravel.Gifu.Api.Services
+namespace HappyTravel.Gifu.Api.Services;
+
+/// <summary>
+/// Fake class to use in integration and end-to-end tests. AmEx returns the same date every time which is not suitable in some cases
+/// </summary>
+public class FakeAmexClient : IAmExClient
 {
-    /// <summary>
-    /// Fake class to use in integration and end-to-end tests. AmEx returns the same date every time which is not suitable in some cases
-    /// </summary>
-    public class FakeAmexClient : IAmExClient
+    public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> CreateToken(CreateTokenRequest payload)
     {
-        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> CreateToken(CreateTokenRequest payload)
+        var transactionId = Guid.NewGuid().ToString();
+        var response = new TokenIssuanceData
         {
-            var transactionId = Guid.NewGuid().ToString();
-            var response = new TokenIssuanceData
+            TokenDetails = new Models.AmEx.Response.TokenDetails
             {
-                TokenDetails = new Models.AmEx.Response.TokenDetails
-                {
-                    TokenNumber = Guid.NewGuid().ToString(),
-                    TokenSecurityCode = "777",
-                    TokenExpiryDate = DateTime.ParseExact(payload.TokenIssuanceParams.TokenDetails.TokenEndDate!, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyyMM")
-                }
-            };
-            return await Task.FromResult((transactionId, response));
-        }
-
-        
-        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Remove(DeleteRequest payload) 
-            => await Task.FromResult((string.Empty, new TokenIssuanceData()));
-
-        
-        public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload) 
-            => await Task.FromResult((string.Empty, new TokenIssuanceData()));
+                TokenNumber = Guid.NewGuid().ToString(),
+                TokenSecurityCode = "777",
+                TokenExpiryDate = DateTime.ParseExact(payload.TokenIssuanceParams.TokenDetails.TokenEndDate!, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyyMM")
+            }
+        };
+        return await Task.FromResult((transactionId, response));
     }
+
+        
+    public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Remove(DeleteRequest payload) 
+        => await Task.FromResult((string.Empty, new TokenIssuanceData()));
+
+        
+    public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload) 
+        => await Task.FromResult((string.Empty, new TokenIssuanceData()));
 }

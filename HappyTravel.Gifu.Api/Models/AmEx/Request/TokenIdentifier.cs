@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace HappyTravel.Gifu.Api.Models.AmEx.Request
+namespace HappyTravel.Gifu.Api.Models.AmEx.Request;
+
+public readonly struct TokenIdentifier
 {
-    public readonly struct TokenIdentifier
-    {
-        [JsonPropertyName("token_number")]
-        public string TokenNumber { get; init; }
-    }
+    [JsonPropertyName("token_number")]
+    public string TokenNumber { get; init; }
 }

@@ -1,10 +1,9 @@
-namespace HappyTravel.Gifu.Api.Models
+namespace HappyTravel.Gifu.Api.Models;
+
+public enum CreditCardTypes
 {
-    public enum CreditCardTypes
-    {
-        Unknown = 0,
-        AmericanExpress = 1,
-        MasterCard = 2,
-        Visa = 3
-    }
+    Unknown = 0,
+    AmericanExpress = 1,
+    MasterCard = 2,
+    Visa = 3
 }

@@ -1,7 +1,6 @@
-﻿namespace HappyTravel.Gifu.Api.Infrastructure.Options
+﻿namespace HappyTravel.Gifu.Api.Infrastructure.Options;
+
+public class DirectEditOptions
 {
-    public class DirectEditOptions
-    {
-        public bool IsEnabled { get; set; }
-    }
+    public bool IsEnabled { get; set; }
 }

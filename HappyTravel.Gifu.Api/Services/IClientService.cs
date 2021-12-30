@@ -1,9 +1,8 @@
 ﻿using CSharpFunctionalExtensions;
 
-namespace HappyTravel.Gifu.Api.Services
+namespace HappyTravel.Gifu.Api.Services;
+
+public interface IClientService
 {
-    public interface IClientService
-    {
-        Result<string> GetId();
-    }
+    Result<string> GetId();
 }
