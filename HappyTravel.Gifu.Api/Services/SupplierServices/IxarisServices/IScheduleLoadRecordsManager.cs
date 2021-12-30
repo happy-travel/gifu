@@ -2,12 +2,11 @@
 using HappyTravel.Gifu.Data.Models;
 using System.Threading.Tasks;
 
-namespace HappyTravel.Gifu.Api.Services.SupplierServices.IxarisServices
+namespace HappyTravel.Gifu.Api.Services.SupplierServices.IxarisServices;
+
+public interface IScheduleLoadRecordsManager
 {
-    public interface IScheduleLoadRecordsManager
-    {
-        Task Add(IxarisScheduleLoad ixarisScheduleLoad);
-        Task<Result<IxarisScheduleLoad>> Get(string cardReference);
-        Task SetCancelled(IxarisScheduleLoad ixarisScheduleLoad);
-    }
+    Task Add(IxarisScheduleLoad ixarisScheduleLoad);
+    Task<Result<IxarisScheduleLoad>> Get(string cardReference);
+    Task SetCancelled(IxarisScheduleLoad ixarisScheduleLoad);
 }

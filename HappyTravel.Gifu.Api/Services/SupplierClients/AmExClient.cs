@@ -14,84 +14,83 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace HappyTravel.Gifu.Api.Services.SupplierClients
+namespace HappyTravel.Gifu.Api.Services.SupplierClients;
+
+public class AmExClient : IAmExClient
 {
-    public class AmExClient : IAmExClient
+    public AmExClient(HttpClient httpClient, IOptions<AmExOptions> options, ILogger<AmExClient> logger)
     {
-        public AmExClient(HttpClient httpClient, IOptions<AmExOptions> options, ILogger<AmExClient> logger)
-        {
-            _httpClient = httpClient;
-            _options = options.Value;
-            _logger = logger;
-        }
-        
-        
-        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> CreateToken(CreateTokenRequest payload) 
-            => SendRequest(HttpMethod.Post, payload);
-
-
-        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Remove(DeleteRequest payload) 
-            => SendRequest(HttpMethod.Delete, payload);
-
-
-        public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload)
-            => SendRequest(HttpMethod.Put, payload);
-
-
-        private async Task<Result<(string TransactionId, TokenIssuanceData Response)>> SendRequest<T>(HttpMethod httpMethod, T payload)
-        {
-            var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
-            var request = new HttpRequestMessage(httpMethod, endpoint)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
-            };
-            
-            await SignMessage(httpMethod, request);
-            
-            var response = await _httpClient.SendAsync(request);
-            try
-            {
-                var result = await response.Content.ReadFromJsonAsync<AmexResponse>();
-                var transactionId = string.Empty;
-
-                if (response.Headers.TryGetValues("transaction_id", out var values))
-                {
-                    transactionId = values.Single();
-                }
-
-                return result.Status.ShortMessage == "success"
-                    ? (transactionId, result.TokenIssuanceData)
-                    : Result.Failure<(string TransactionId, TokenIssuanceData Response)>(result.Status.DetailedMessage);
-            }
-            catch (JsonReaderException ex)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                _logger.LogResponseDeserializationFailed(responseBody, ex);
-                return Result.Failure<(string TransactionId, TokenIssuanceData Response)>("Response deserialization failed");
-            }
-        }
-
-
-        private async Task SignMessage(HttpMethod httpMethod, HttpRequestMessage request)
-        {
-            var authProvider = new HmacAuthProvider();
-            var headers = authProvider.GenerateAuthHeaders(clientKey: _options.ClientId, 
-                clientSecret: _options.ClientSecret, 
-                payload: request.Content is not null
-                    ? await request.Content.ReadAsStringAsync()
-                    : null, 
-                requestUrl: request.RequestUri?.ToString(),
-                httpMethod: httpMethod.Method);
-
-            foreach (var (key, value) in headers)
-            {
-                request.Headers.Add(key, value);
-            }
-        }
-
-
-        private readonly HttpClient _httpClient;
-        private readonly AmExOptions _options;
-        private readonly ILogger<AmExClient> _logger;
+        _httpClient = httpClient;
+        _options = options.Value;
+        _logger = logger;
     }
+        
+        
+    public Task<Result<(string TransactionId, TokenIssuanceData Response)>> CreateToken(CreateTokenRequest payload) 
+        => SendRequest(HttpMethod.Post, payload);
+
+
+    public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Remove(DeleteRequest payload) 
+        => SendRequest(HttpMethod.Delete, payload);
+
+
+    public Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload)
+        => SendRequest(HttpMethod.Put, payload);
+
+
+    private async Task<Result<(string TransactionId, TokenIssuanceData Response)>> SendRequest<T>(HttpMethod httpMethod, T payload)
+    {
+        var endpoint = $"{_options.Endpoint}/payments/digital/v2/tokenization/smart_tokens";
+        var request = new HttpRequestMessage(httpMethod, endpoint)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+        };
+            
+        await SignMessage(httpMethod, request);
+            
+        var response = await _httpClient.SendAsync(request);
+        try
+        {
+            var result = await response.Content.ReadFromJsonAsync<AmexResponse>();
+            var transactionId = string.Empty;
+
+            if (response.Headers.TryGetValues("transaction_id", out var values))
+            {
+                transactionId = values.Single();
+            }
+
+            return result.Status.ShortMessage == "success"
+                ? (transactionId, result.TokenIssuanceData)
+                : Result.Failure<(string TransactionId, TokenIssuanceData Response)>(result.Status.DetailedMessage);
+        }
+        catch (JsonReaderException ex)
+        {
+            var responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogResponseDeserializationFailed(responseBody, ex);
+            return Result.Failure<(string TransactionId, TokenIssuanceData Response)>("Response deserialization failed");
+        }
+    }
+
+
+    private async Task SignMessage(HttpMethod httpMethod, HttpRequestMessage request)
+    {
+        var authProvider = new HmacAuthProvider();
+        var headers = authProvider.GenerateAuthHeaders(clientKey: _options.ClientId, 
+            clientSecret: _options.ClientSecret, 
+            payload: request.Content is not null
+                ? await request.Content.ReadAsStringAsync()
+                : null, 
+            requestUrl: request.RequestUri?.ToString(),
+            httpMethod: httpMethod.Method);
+
+        foreach (var (key, value) in headers)
+        {
+            request.Headers.Add(key, value);
+        }
+    }
+
+
+    private readonly HttpClient _httpClient;
+    private readonly AmExOptions _options;
+    private readonly ILogger<AmExClient> _logger;
 }

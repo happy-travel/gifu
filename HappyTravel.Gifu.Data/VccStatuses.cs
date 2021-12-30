@@ -1,9 +1,8 @@
-﻿namespace HappyTravel.Gifu.Data
+﻿namespace HappyTravel.Gifu.Data;
+
+public enum VccStatuses
 {
-    public enum VccStatuses
-    {
-        Unknown = 0,
-        Issued = 1,
-        Deleted = 2
-    }
+    Unknown = 0,
+    Issued = 1,
+    Deleted = 2
 }

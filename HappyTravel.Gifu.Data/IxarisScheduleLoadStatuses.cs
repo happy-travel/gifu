@@ -1,9 +1,8 @@
-﻿namespace HappyTravel.Gifu.Data
+﻿namespace HappyTravel.Gifu.Data;
+
+public enum IxarisScheduleLoadStatuses
 {
-    public enum IxarisScheduleLoadStatuses
-    {
-        Unknown = 0,
-        Active = 1,
-        Canceled = 2
-    }
+    Unknown = 0,
+    Active = 1,
+    Canceled = 2
 }

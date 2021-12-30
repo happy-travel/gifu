@@ -1,8 +1,7 @@
-﻿namespace HappyTravel.Gifu.Api.Infrastructure.Options
+﻿namespace HappyTravel.Gifu.Api.Infrastructure.Options;
+
+public class AmexFieldSettings
 {
-    public class AmexFieldSettings
-    {
-        public int Index { get; set; }
-        public int Length { get; set; }
-    }
+    public int Index { get; set; }
+    public int Length { get; set; }
 }

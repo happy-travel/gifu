@@ -1,10 +1,9 @@
 ﻿using CSharpFunctionalExtensions;
 using HappyTravel.Money.Enums;
 
-namespace HappyTravel.Gifu.Api.Services
+namespace HappyTravel.Gifu.Api.Services;
+
+public interface IAccountsService
 {
-    public interface IAccountsService
-    {
-        Result<string> GetAccountId(Currencies currency);
-    }
+    Result<string> GetAccountId(Currencies currency);
 }

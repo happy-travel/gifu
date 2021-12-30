@@ -1,9 +1,8 @@
-﻿namespace HappyTravel.Gifu.Data
+﻿namespace HappyTravel.Gifu.Data;
+
+public enum VccVendors
 {
-    public enum VccVendors
-    {
-        None = 0,
-        AmericanExpress = 1,
-        Ixaris = 2
-    }
+    None = 0,
+    AmericanExpress = 1,
+    Ixaris = 2
 }
