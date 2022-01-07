@@ -17,7 +17,7 @@ public static partial class LoggerExtensions
     [LoggerMessage(81016, LogLevel.Information, "Processing VCC issue request for '{ReferenceCode}' completed successfully. UniqueId: '{UniqueId}'")]
     static partial void VccIssueRequestSuccess(ILogger logger, string ReferenceCode, string UniqueId);
     
-    [LoggerMessage(0, LogLevel.Information, "Deleting VCC for '{ReferenceCode}'")]
+    [LoggerMessage(81020, LogLevel.Information, "Deleting VCC for '{ReferenceCode}'")]
     static partial void VccDeleteRequestStarted(ILogger logger, string ReferenceCode);
     
     [LoggerMessage(81021, LogLevel.Error, "Deleting VCC for '{ReferenceCode}' failed. '{Error}'")]
