@@ -8,6 +8,7 @@ using HappyTravel.Gifu.Api.Services;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
 using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data;
+using HappyTravel.Gifu.Data.CompiledModels;
 using HappyTravel.HttpRequestLogger;
 using HappyTravel.Money.Enums;
 using HappyTravel.VaultClient;
@@ -169,6 +170,8 @@ public static class ServiceCollectionExtensions
             options.UseInternalServiceProvider(null);
             options.EnableSensitiveDataLogging(false);
             options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+            // Need to run `dotnet ef dbcontext optimize` in HappyTravel.Gifu.Data project after changing for regenerating compiled models
+            options.UseModel(GifuContextModel.Instance);
         }, 16);
     }
         
