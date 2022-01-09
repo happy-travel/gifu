@@ -66,7 +66,7 @@ public class AmExClient : IAmExClient
         catch (JsonReaderException ex)
         {
             var responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogResponseDeserializationFailed(responseBody, ex);
+            _logger.LogResponseDeserializationFailed(ex, responseBody);
             return Result.Failure<(string TransactionId, TokenIssuanceData Response)>("Response deserialization failed");
         }
     }

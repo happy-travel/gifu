@@ -1,141 +1,93 @@
 using System;
 using Microsoft.Extensions.Logging;
 
-namespace HappyTravel.Gifu.Api.Infrastructure.Logging
+namespace HappyTravel.Gifu.Api.Infrastructure.Logging;
+
+public static partial class LoggerExtensions
 {
-    public static class LoggerExtensions
-    {
-        static LoggerExtensions()
-        {
-            ClientIdRetrievalFailure = LoggerMessage.Define(LogLevel.Warning,
-                new EventId(81000, "ClientIdRetrievalFailure"),
-                "Could not get client id for authenticated user");
-            
-            VccIssueRequestStarted = LoggerMessage.Define<string, decimal, string>(LogLevel.Information,
-                new EventId(81010, "VccIssueRequestStarted"),
-                "Processing VCC issue request for '{ReferenceCode}'. Amount: {Amount} {Currency},");
-            
-            VccIssueRequestFailure = LoggerMessage.Define<string, string>(LogLevel.Error,
-                new EventId(81015, "VccIssueRequestFailure"),
-                "Processing VCC issue request for '{ReferenceCode}' failed: '{Error}'");
-            
-            VccIssueRequestSuccess = LoggerMessage.Define<string, string>(LogLevel.Information,
-                new EventId(81016, "VccIssueRequestSuccess"),
-                "Processing VCC issue request for '{ReferenceCode}' completed successfully. UniqueId: '{UniqueId}'");
-            
-            VccDeleteRequestStarted = LoggerMessage.Define<string>(LogLevel.Information,
-                new EventId(81020, "VccDeleteRequestStarted"),
-                "Deleting VCC for '{ReferenceCode}'");
-            
-            VccDeleteRequestFailure = LoggerMessage.Define<string, string>(LogLevel.Error,
-                new EventId(81021, "VccDeleteRequestFailure"),
-                "Deleting VCC for '{ReferenceCode}' failed. '{Error}'");
-            
-            VccDeleteRequestSuccess = LoggerMessage.Define<string>(LogLevel.Information,
-                new EventId(81022, "VccDeleteRequestSuccess"),
-                "Deleting VCC for '{ReferenceCode}' completed successfully");
-            
-            VccModifyAmountRequestStarted = LoggerMessage.Define<string, decimal>(LogLevel.Information,
-                new EventId(81030, "VccModifyAmountRequestStarted"),
-                "Modifying VCC amount for '{ReferenceCode}'. New value: {amount}");
-            
-            VccModifyAmountRequestFailure = LoggerMessage.Define<string, string>(LogLevel.Error,
-                new EventId(81031, "VccModifyAmountRequestFailure"),
-                "Modifying VCC amount for '{ReferenceCode}' failed. '{Error}'");
-            
-            VccModifyAmountRequestSuccess = LoggerMessage.Define<string, decimal>(LogLevel.Information,
-                new EventId(81032, "VccModifyAmountRequestSuccess"),
-                "Modifying VCC amount for '{ReferenceCode}' completed successfully. New value: {amount}");
-            
-            ResponseDeserializationFailed = LoggerMessage.Define<string>(LogLevel.Error,
-                new EventId(81040, "ResponseDeserializationFailed"),
-                "Response deserialization failed: {Response}");
-            
-            VccEditRequestStarted = LoggerMessage.Define<string>(LogLevel.Information,
-                new EventId(81050, "VccEditRequestStarted"),
-                "Editing VCC amount for '{ReferenceCode}' started");
-            
-            VccEditFailure = LoggerMessage.Define<string, string>(LogLevel.Error,
-                new EventId(81051, "VccEditFailure"),
-                "Editing VCC for '{ReferenceCode}' failed. '{Error}'");
-            
-            VccEditSuccess = LoggerMessage.Define<string>(LogLevel.Information,
-                new EventId(81052, "VccEditSuccess"),
-                "Editing VCC for '{ReferenceCode}' completed successfully");
-            
-        }
+    [LoggerMessage(81000, LogLevel.Warning, "Could not get client id for authenticated user")]
+    static partial void ClientIdRetrievalFailure(ILogger logger);
     
-                
-         public static void LogClientIdRetrievalFailure(this ILogger logger, Exception exception = null)
-            => ClientIdRetrievalFailure(logger, exception);
-                
-         public static void LogVccIssueRequestStarted(this ILogger logger, string ReferenceCode, decimal Amount, string Currency, Exception exception = null)
-            => VccIssueRequestStarted(logger, ReferenceCode, Amount, Currency, exception);
-                
-         public static void LogVccIssueRequestFailure(this ILogger logger, string ReferenceCode, string Error, Exception exception = null)
-            => VccIssueRequestFailure(logger, ReferenceCode, Error, exception);
-                
-         public static void LogVccIssueRequestSuccess(this ILogger logger, string ReferenceCode, string UniqueId, Exception exception = null)
-            => VccIssueRequestSuccess(logger, ReferenceCode, UniqueId, exception);
-                
-         public static void LogVccDeleteRequestStarted(this ILogger logger, string ReferenceCode, Exception exception = null)
-            => VccDeleteRequestStarted(logger, ReferenceCode, exception);
-                
-         public static void LogVccDeleteRequestFailure(this ILogger logger, string ReferenceCode, string Error, Exception exception = null)
-            => VccDeleteRequestFailure(logger, ReferenceCode, Error, exception);
-                
-         public static void LogVccDeleteRequestSuccess(this ILogger logger, string ReferenceCode, Exception exception = null)
-            => VccDeleteRequestSuccess(logger, ReferenceCode, exception);
-                
-         public static void LogVccModifyAmountRequestStarted(this ILogger logger, string ReferenceCode, decimal amount, Exception exception = null)
-            => VccModifyAmountRequestStarted(logger, ReferenceCode, amount, exception);
-                
-         public static void LogVccModifyAmountRequestFailure(this ILogger logger, string ReferenceCode, string Error, Exception exception = null)
-            => VccModifyAmountRequestFailure(logger, ReferenceCode, Error, exception);
-                
-         public static void LogVccModifyAmountRequestSuccess(this ILogger logger, string ReferenceCode, decimal amount, Exception exception = null)
-            => VccModifyAmountRequestSuccess(logger, ReferenceCode, amount, exception);
-                
-         public static void LogResponseDeserializationFailed(this ILogger logger, string Response, Exception exception = null)
-            => ResponseDeserializationFailed(logger, Response, exception);
-                
-         public static void LogVccEditRequestStarted(this ILogger logger, string ReferenceCode, Exception exception = null)
-            => VccEditRequestStarted(logger, ReferenceCode, exception);
-                
-         public static void LogVccEditFailure(this ILogger logger, string ReferenceCode, string Error, Exception exception = null)
-            => VccEditFailure(logger, ReferenceCode, Error, exception);
-                
-         public static void LogVccEditSuccess(this ILogger logger, string ReferenceCode, Exception exception = null)
-            => VccEditSuccess(logger, ReferenceCode, exception);
+    [LoggerMessage(81010, LogLevel.Information, "Processing VCC issue request for '{ReferenceCode}'. Amount: {Amount} {Currency},")]
+    static partial void VccIssueRequestStarted(ILogger logger, string ReferenceCode, decimal Amount, string Currency);
+    
+    [LoggerMessage(81015, LogLevel.Error, "Processing VCC issue request for '{ReferenceCode}' failed: '{Error}'")]
+    static partial void VccIssueRequestFailure(ILogger logger, string ReferenceCode, string Error);
+    
+    [LoggerMessage(81016, LogLevel.Information, "Processing VCC issue request for '{ReferenceCode}' completed successfully. UniqueId: '{UniqueId}'")]
+    static partial void VccIssueRequestSuccess(ILogger logger, string ReferenceCode, string UniqueId);
+    
+    [LoggerMessage(81020, LogLevel.Information, "Deleting VCC for '{ReferenceCode}'")]
+    static partial void VccDeleteRequestStarted(ILogger logger, string ReferenceCode);
+    
+    [LoggerMessage(81021, LogLevel.Error, "Deleting VCC for '{ReferenceCode}' failed. '{Error}'")]
+    static partial void VccDeleteRequestFailure(ILogger logger, string ReferenceCode, string Error);
+    
+    [LoggerMessage(81022, LogLevel.Information, "Deleting VCC for '{ReferenceCode}' completed successfully")]
+    static partial void VccDeleteRequestSuccess(ILogger logger, string ReferenceCode);
+    
+    [LoggerMessage(81030, LogLevel.Information, "Modifying VCC amount for '{ReferenceCode}'. New value: {amount}")]
+    static partial void VccModifyAmountRequestStarted(ILogger logger, string ReferenceCode, decimal amount);
+    
+    [LoggerMessage(81031, LogLevel.Error, "Modifying VCC amount for '{ReferenceCode}' failed. '{Error}'")]
+    static partial void VccModifyAmountRequestFailure(ILogger logger, string ReferenceCode, string Error);
+    
+    [LoggerMessage(81032, LogLevel.Information, "Modifying VCC amount for '{ReferenceCode}' completed successfully. New value: {amount}")]
+    static partial void VccModifyAmountRequestSuccess(ILogger logger, string ReferenceCode, decimal amount);
+    
+    [LoggerMessage(81040, LogLevel.Error, "Response deserialization failed: {Response}")]
+    static partial void ResponseDeserializationFailed(ILogger logger, System.Exception exception, string Response);
+    
+    [LoggerMessage(81050, LogLevel.Information, "Editing VCC amount for '{ReferenceCode}' started")]
+    static partial void VccEditRequestStarted(ILogger logger, string ReferenceCode);
+    
+    [LoggerMessage(81051, LogLevel.Error, "Editing VCC for '{ReferenceCode}' failed. '{Error}'")]
+    static partial void VccEditFailure(ILogger logger, string ReferenceCode, string Error);
+    
+    [LoggerMessage(81052, LogLevel.Information, "Editing VCC for '{ReferenceCode}' completed successfully")]
+    static partial void VccEditSuccess(ILogger logger, string ReferenceCode);
     
     
-        
-        private static readonly Action<ILogger, Exception> ClientIdRetrievalFailure;
-        
-        private static readonly Action<ILogger, string, decimal, string, Exception> VccIssueRequestStarted;
-        
-        private static readonly Action<ILogger, string, string, Exception> VccIssueRequestFailure;
-        
-        private static readonly Action<ILogger, string, string, Exception> VccIssueRequestSuccess;
-        
-        private static readonly Action<ILogger, string, Exception> VccDeleteRequestStarted;
-        
-        private static readonly Action<ILogger, string, string, Exception> VccDeleteRequestFailure;
-        
-        private static readonly Action<ILogger, string, Exception> VccDeleteRequestSuccess;
-        
-        private static readonly Action<ILogger, string, decimal, Exception> VccModifyAmountRequestStarted;
-        
-        private static readonly Action<ILogger, string, string, Exception> VccModifyAmountRequestFailure;
-        
-        private static readonly Action<ILogger, string, decimal, Exception> VccModifyAmountRequestSuccess;
-        
-        private static readonly Action<ILogger, string, Exception> ResponseDeserializationFailed;
-        
-        private static readonly Action<ILogger, string, Exception> VccEditRequestStarted;
-        
-        private static readonly Action<ILogger, string, string, Exception> VccEditFailure;
-        
-        private static readonly Action<ILogger, string, Exception> VccEditSuccess;
-    }
+    
+    public static void LogClientIdRetrievalFailure(this ILogger logger)
+        => ClientIdRetrievalFailure(logger);
+    
+    public static void LogVccIssueRequestStarted(this ILogger logger, string ReferenceCode, decimal Amount, string Currency)
+        => VccIssueRequestStarted(logger, ReferenceCode, Amount, Currency);
+    
+    public static void LogVccIssueRequestFailure(this ILogger logger, string ReferenceCode, string Error)
+        => VccIssueRequestFailure(logger, ReferenceCode, Error);
+    
+    public static void LogVccIssueRequestSuccess(this ILogger logger, string ReferenceCode, string UniqueId)
+        => VccIssueRequestSuccess(logger, ReferenceCode, UniqueId);
+    
+    public static void LogVccDeleteRequestStarted(this ILogger logger, string ReferenceCode)
+        => VccDeleteRequestStarted(logger, ReferenceCode);
+    
+    public static void LogVccDeleteRequestFailure(this ILogger logger, string ReferenceCode, string Error)
+        => VccDeleteRequestFailure(logger, ReferenceCode, Error);
+    
+    public static void LogVccDeleteRequestSuccess(this ILogger logger, string ReferenceCode)
+        => VccDeleteRequestSuccess(logger, ReferenceCode);
+    
+    public static void LogVccModifyAmountRequestStarted(this ILogger logger, string ReferenceCode, decimal amount)
+        => VccModifyAmountRequestStarted(logger, ReferenceCode, amount);
+    
+    public static void LogVccModifyAmountRequestFailure(this ILogger logger, string ReferenceCode, string Error)
+        => VccModifyAmountRequestFailure(logger, ReferenceCode, Error);
+    
+    public static void LogVccModifyAmountRequestSuccess(this ILogger logger, string ReferenceCode, decimal amount)
+        => VccModifyAmountRequestSuccess(logger, ReferenceCode, amount);
+    
+    public static void LogResponseDeserializationFailed(this ILogger logger, System.Exception exception, string Response)
+        => ResponseDeserializationFailed(logger, exception, Response);
+    
+    public static void LogVccEditRequestStarted(this ILogger logger, string ReferenceCode)
+        => VccEditRequestStarted(logger, ReferenceCode);
+    
+    public static void LogVccEditFailure(this ILogger logger, string ReferenceCode, string Error)
+        => VccEditFailure(logger, ReferenceCode, Error);
+    
+    public static void LogVccEditSuccess(this ILogger logger, string ReferenceCode)
+        => VccEditSuccess(logger, ReferenceCode);
 }
