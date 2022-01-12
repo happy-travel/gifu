@@ -5,5 +5,5 @@ namespace HappyTravel.Gifu.Api.Services;
 
 public interface ICustomFieldsMapper
 {
-    List<CustomField> Map(string referenceCode, Dictionary<string, string?> dictionary);
+    List<CustomField> Map(string referenceCode, Dictionary<string, string?>? dictionary);
 }
