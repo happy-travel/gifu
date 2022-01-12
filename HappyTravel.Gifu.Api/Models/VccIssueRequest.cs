@@ -12,5 +12,5 @@ public readonly struct VccIssueRequest
     public List<CreditCardTypes>? Types { get; init; }
     public DateTime ActivationDate { get; init; }
     public DateTime DueDate { get; init; }
-    public Dictionary<string, string?> SpecialValues { get; init; }
+    public Dictionary<string, string?>? SpecialValues { get; init; }
 }

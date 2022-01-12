@@ -15,7 +15,7 @@ public class CustomFieldsMapper : ICustomFieldsMapper
     }
         
         
-    public List<CustomField> Map(string referenceCode, Dictionary<string, string?> dictionary)
+    public List<CustomField> Map(string referenceCode, Dictionary<string, string?>? dictionary)
     {
         var fieldsOptions = _fieldOptionsMonitor.CurrentValue;
             
@@ -28,11 +28,14 @@ public class CustomFieldsMapper : ICustomFieldsMapper
             }
         };
 
+        if (dictionary == null) 
+            return list;
+        
         foreach (var (key, value) in dictionary)
         {
             if (value is null)
                 continue;
-                
+
             if (fieldsOptions.CustomFields.TryGetValue(key, out var fieldSettings))
             {
                 list.Add(new CustomField
@@ -42,7 +45,7 @@ public class CustomFieldsMapper : ICustomFieldsMapper
                 });
             }
         }
-            
+
         return list;
     }
         
