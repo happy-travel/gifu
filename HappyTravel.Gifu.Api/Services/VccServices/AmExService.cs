@@ -117,7 +117,7 @@ public class AmExService : IVccSupplierService
     {
         return await GetAccountId(vcc)
             .Bind(RemoveCard)
-            .Map(Save);
+            .Tap(Save);
 
 
         async Task<Result<VccIssue>> RemoveCard(string AccountId)
@@ -149,11 +149,11 @@ public class AmExService : IVccSupplierService
     {
         return await GetAccountId(Vcc)
             .Bind(DecreaseCardAmount)
-            .Map(SaveHistory);
+            .Tap(SaveHistory);
 
 
         async Task<Result<VccIssue>> DecreaseCardAmount(string AccountId)
-        {                
+        {
             var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: Vcc.CardNumber,
                 accountId: AccountId,
                 tokenAmount: amount,
@@ -183,7 +183,7 @@ public class AmExService : IVccSupplierService
         return await IsDirectEditEnabled()               
             .Bind(() => GetAccountId(vcc))
             .Bind(UpdateCard)
-            .Map(SaveRequest);
+            .Tap(SaveRequest);
 
 
         Result IsDirectEditEnabled()
