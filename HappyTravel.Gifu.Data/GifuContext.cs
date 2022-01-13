@@ -1,6 +1,4 @@
-﻿using System;
-using HappyTravel.Gifu.Data.Converters;
-using HappyTravel.Gifu.Data.Models;
+﻿using HappyTravel.Gifu.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HappyTravel.Gifu.Data;
@@ -15,13 +13,6 @@ public class GifuContext : DbContext
     public DbSet<AmountChangesHistory> AmountChangesHistories => Set<AmountChangesHistory>();
     public DbSet<VccDirectEditLog> VccDirectEditLogs => Set<VccDirectEditLog>();
     public DbSet<IxarisScheduleLoad> IxarisScheduleLoads => Set<IxarisScheduleLoad>();
-    
-    
-    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
-        configurationBuilder.Properties<DateTime>()
-            .HaveConversion<DateTimeKindConverter>();
-    }
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

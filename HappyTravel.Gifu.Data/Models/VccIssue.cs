@@ -10,12 +10,12 @@ public class VccIssue
     public string ReferenceCode { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public Currencies Currency { get; set; }
-    public DateTime ActivationDate { get; set; }
-    public DateTime DueDate { get; set; }
+    public DateTimeOffset ActivationDate { get; set; }
+    public DateTimeOffset DueDate { get; set; }
     public string ClientId { get; set; } = string.Empty;
     public string CardNumber { get; set; } = string.Empty;
-    public DateTime Created { get; set; }
-    public DateTime Modified { get; set; }
+    public DateTimeOffset Created { get; set; }
+    public DateTimeOffset Modified { get; set; }
     public VccStatuses Status { get; set; }
     public VccVendors VccVendor { get; init; }
 }

@@ -22,7 +22,7 @@ public class FakeAmexClient : IAmExClient
             {
                 TokenNumber = Guid.NewGuid().ToString(),
                 TokenSecurityCode = "777",
-                TokenExpiryDate = DateTime.ParseExact(payload.TokenIssuanceParams.TokenDetails.TokenEndDate!, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyyMM")
+                TokenExpiryDate = DateTimeOffset.ParseExact(payload.TokenIssuanceParams.TokenDetails.TokenEndDate!, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyyMM")
             }
         };
         return await Task.FromResult((transactionId, response));

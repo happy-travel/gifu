@@ -5,7 +5,7 @@ namespace HappyTravel.Gifu.Api.Models;
 
 public struct VccEditRequest
 {
-    public DateTime? ActivationDate { get; init; }
-    public DateTime? DueDate { get; init; }
+    public DateTimeOffset? ActivationDate { get; init; }
+    public DateTimeOffset? DueDate { get; init; }
     public MoneyAmount? MoneyAmount { get; init; }
 }

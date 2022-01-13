@@ -47,7 +47,7 @@ public class IxarisService : IVccSupplierService
         async Task<Result> ValidateRequest()
         {
             var validator = new InlineValidator<VccIssueRequest>();
-            var today = DateTime.UtcNow.Date;
+            var today = DateTimeOffset.UtcNow.Date;
 
             validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
             validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
@@ -94,7 +94,7 @@ public class IxarisService : IVccSupplierService
             return isSuccess
                 ? (result.IssueVcc.TransactionReference, response,
                     new(number: response.CardNumber,
-                        expiry: new(int.Parse(response.ExpiryDateYear), int.Parse(response.ExpiryDateMonth), 1),
+                        expiry: new(int.Parse(response.ExpiryDateYear), int.Parse(response.ExpiryDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
                         holder: response.CardholderName,
                         code: response.Cvv,
                         type: result.VccType))
@@ -117,7 +117,7 @@ public class IxarisService : IVccSupplierService
 
             if (isSuccess)
             {
-                var now = DateTime.UtcNow;
+                var now = DateTimeOffset.UtcNow;
 
                 var scheduleLoad = new IxarisScheduleLoad()
                 {
@@ -139,7 +139,7 @@ public class IxarisService : IVccSupplierService
 
         async Task<Result<VirtualCreditCard>> SaveResult((string TransactionId, VccDetails VccDetails, VirtualCreditCard Vcc) result)
         {
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
 
             var vccIssue = new VccIssue
             {
@@ -148,7 +148,7 @@ public class IxarisService : IVccSupplierService
                 ReferenceCode = request.ReferenceCode,
                 Amount = request.MoneyAmount.Amount,
                 Currency = request.MoneyAmount.Currency,
-                ActivationDate = new(int.Parse(result.VccDetails.StartDateYear), int.Parse(result.VccDetails.StartDateMonth), 1),
+                ActivationDate = new(int.Parse(result.VccDetails.StartDateYear), int.Parse(result.VccDetails.StartDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
                 DueDate = result.Vcc.Expiry,
                 ClientId = clientId,
                 CardNumber = result.VccDetails.CardNumber,
