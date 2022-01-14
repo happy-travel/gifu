@@ -33,7 +33,7 @@ public class ScheduleLoadRecordsManager : IScheduleLoadRecordsManager
 
     public Task SetCancelled(IxarisScheduleLoad ixarisScheduleLoad)
     {
-        ixarisScheduleLoad.Modified = DateTime.Now;
+        ixarisScheduleLoad.Modified = DateTimeOffset.UtcNow;
         ixarisScheduleLoad.Status = IxarisScheduleLoadStatuses.Canceled;
         _context.Update(ixarisScheduleLoad);
         return _context.SaveChangesAsync();

@@ -46,7 +46,7 @@ public class VccIssueRecordsManager : IVccIssueRecordsManager
 
     public Task Remove(VccIssue vccIssue)
     {
-        vccIssue.Modified = DateTime.UtcNow;
+        vccIssue.Modified = DateTimeOffset.UtcNow;
         vccIssue.Status = VccStatuses.Deleted;
         _context.Update(vccIssue);
         return _context.SaveChangesAsync();
@@ -55,7 +55,7 @@ public class VccIssueRecordsManager : IVccIssueRecordsManager
 
     public Task Update(VccIssue vccIssue, VccEditRequest changes)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
         vccIssue.Modified = now;
                 
         if (changes.MoneyAmount is not null) 
@@ -81,7 +81,7 @@ public class VccIssueRecordsManager : IVccIssueRecordsManager
 
     public Task DecreaseAmount(VccIssue vccIssue, decimal amount)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
         var amountBefore = vccIssue.Amount;
         vccIssue.Amount = amount;
         vccIssue.Modified = now;

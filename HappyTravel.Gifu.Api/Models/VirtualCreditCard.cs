@@ -4,7 +4,7 @@ namespace HappyTravel.Gifu.Api.Models;
 
 public readonly struct VirtualCreditCard
 {
-    public VirtualCreditCard(string number, DateTime expiry, string holder, string code, CreditCardTypes type)
+    public VirtualCreditCard(string number, DateTimeOffset expiry, string holder, string code, CreditCardTypes type)
     {
         Number = number;
         Expiry = expiry;
@@ -15,7 +15,7 @@ public readonly struct VirtualCreditCard
         
         
     public string Number { get; }
-    public DateTime Expiry { get; }
+    public DateTimeOffset Expiry { get; }
     public string Holder { get; }
     public string Code { get; }
     public CreditCardTypes Type { get; }
