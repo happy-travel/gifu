@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using HappyTravel.Gifu.Api.Validators;
 
 namespace HappyTravel.Gifu.Api.Services.VccServices;
 
@@ -46,17 +47,7 @@ public class IxarisService : IVccSupplierService
 
         async Task<Result> ValidateRequest()
         {
-            var validator = new InlineValidator<VccIssueRequest>();
-            var today = DateTimeOffset.UtcNow.Date;
-
-            validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
-            validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
-            validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
-            validator.RuleFor(r => r.ReferenceCode)
-                .NotEmpty()
-                .MustAsync(async (referenceCode, _) => !await _vccRecordsManager.IsIssued(referenceCode))
-                .WithMessage($"A VCC for '{request.ReferenceCode}' was already issued");
-
+            var validator = new VccIssueRequestValidator(_vccRecordsManager);
             var result = await validator.ValidateAsync(request, cancellationToken);
 
             return result.IsValid
