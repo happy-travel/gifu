@@ -11,6 +11,7 @@ using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
 using HappyTravel.Gifu.Api.Services.VccServices;
+using HappyTravel.Gifu.Api.Validators;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
 using HappyTravel.Money.Models;
@@ -43,17 +44,7 @@ public class AmExService : IVccSupplierService
 
         async Task<Result> ValidateRequest()
         {
-            var validator = new InlineValidator<VccIssueRequest>();
-            var today = DateTime.UtcNow.Date;
-
-            validator.RuleFor(r => r.ActivationDate.Date).GreaterThanOrEqualTo(today);
-            validator.RuleFor(r => r.DueDate.Date).GreaterThan(today);
-            validator.RuleFor(r => r.MoneyAmount.Amount).GreaterThan(0);
-            validator.RuleFor(r => r.ReferenceCode)
-                .NotEmpty()
-                .MustAsync(async (referenceCode, _) => !await _vccRecordsManager.IsIssued(referenceCode))
-                .WithMessage($"A VCC for '{request.ReferenceCode}' was already issued");
-
+            var validator = new VccIssueRequestValidator(_vccRecordsManager);
             var result = await validator.ValidateAsync(request, cancellationToken);
 
             return result.IsValid
