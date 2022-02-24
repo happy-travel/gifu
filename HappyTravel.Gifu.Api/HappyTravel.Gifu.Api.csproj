@@ -21,7 +21,7 @@
     <PackageReference Include="HappyTravel.Money" Version="1.5.0" />
     <PackageReference Include="HappyTravel.StdOutLogger" Version="1.7.0" />
     <PackageReference Include="HappyTravel.Telemetry" Version="0.15.2" />
-    <PackageReference Include="HappyTravel.VaultClient" Version="1.1.2" />
+    <PackageReference Include="HappyTravel.VaultClient" Version="1.2.0" />
     <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="3.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="6.0.1" />
