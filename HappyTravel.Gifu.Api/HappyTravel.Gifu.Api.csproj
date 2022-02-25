@@ -17,7 +17,7 @@
     <PackageReference Include="FluentValidation" Version="10.3.6" />
     <PackageReference Include="HappyTravel.ConsulKeyValueClient.ConfigurationProvider" Version="1.6.1" />
     <PackageReference Include="HappyTravel.ErrorHandling" Version="1.2.3" />
-    <PackageReference Include="HappyTravel.HttpRequestLogger" Version="0.10.0" />
+    <PackageReference Include="HappyTravel.HttpRequestLogger" Version="1.0.4" />
     <PackageReference Include="HappyTravel.Money" Version="1.5.0" />
     <PackageReference Include="HappyTravel.StdOutLogger" Version="1.7.0" />
     <PackageReference Include="HappyTravel.Telemetry" Version="0.15.4" />
