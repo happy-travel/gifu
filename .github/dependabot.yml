@@ -5,9 +5,6 @@ registries:
     url: https://nuget.pkg.github.com/happy-travel/index.json
     username: happy-travel
     password: ${{ secrets.HAPPYTRAVEL_TOKEN }}
-  nuget-org:
-    type: nuget-feed
-    url: https://api.nuget.org/v3/index.json
 updates:
   - package-ecosystem: "nuget"
     directory: "/"
@@ -17,7 +14,6 @@ updates:
       timezone: "UTC"
     registries:
     - nuget-github
-    - nuget-org
     open-pull-requests-limit: 10
     assignees:
     - "dfsko"
