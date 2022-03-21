@@ -20,7 +20,7 @@ public class FakeAmexClient : IAmExClient
         {
             TokenDetails = new Models.AmEx.Response.TokenDetails
             {
-                TokenNumber = Guid.NewGuid().ToString(),
+                TokenNumber = "378282246310005", // Fake, but valid AmEx card number
                 TokenSecurityCode = "777",
                 TokenExpiryDate = DateTimeOffset.ParseExact(payload.TokenIssuanceParams.TokenDetails.TokenEndDate!, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyyMM")
             }
