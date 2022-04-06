@@ -53,6 +53,7 @@ public static class ConfigureServicesExtension
 
         builder.Services.Configure<UserDefinedFieldsOptions>(builder.Configuration.GetSection("UserDefinedFieldsOptions"));
         builder.Services.Configure<DirectEditOptions>(builder.Configuration.GetSection("DirectEditOptions"));
+        builder.Services.Configure<FakeAmexCardOptions>(builder.Configuration.GetSection("FakeAmexCardOptions"));
 
         builder.Services
             .AddProblemDetailsErrorHandling()
