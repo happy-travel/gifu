@@ -2,9 +2,11 @@ using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
+using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models.AmEx.Request;
 using HappyTravel.Gifu.Api.Models.AmEx.Response;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
+using Microsoft.Extensions.Options;
 
 namespace HappyTravel.Gifu.Api.Services;
 
@@ -13,15 +15,24 @@ namespace HappyTravel.Gifu.Api.Services;
 /// </summary>
 public class FakeAmexClient : IAmExClient
 {
+    public FakeAmexClient(IOptionsMonitor<FakeAmexCardOptions> options)
+    {
+        _options = options;
+    }
+
+    
     public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> CreateToken(CreateTokenRequest payload)
     {
+        ArgumentNullException.ThrowIfNull(_options.CurrentValue.Number, nameof(_options.CurrentValue.Number));
+        ArgumentNullException.ThrowIfNull(_options.CurrentValue.Cvv, nameof(_options.CurrentValue.Cvv));
+
         var transactionId = Guid.NewGuid().ToString();
         var response = new TokenIssuanceData
         {
             TokenDetails = new Models.AmEx.Response.TokenDetails
             {
-                TokenNumber = "378282246310005", // Fake, but valid AmEx card number
-                TokenSecurityCode = "777",
+                TokenNumber = _options.CurrentValue.Number,
+                TokenSecurityCode = _options.CurrentValue.Cvv,
                 TokenExpiryDate = DateTimeOffset.ParseExact(payload.TokenIssuanceParams.TokenDetails.TokenEndDate!, "yyyyMMdd", CultureInfo.InvariantCulture).ToString("yyyyMM")
             }
         };
@@ -35,4 +46,7 @@ public class FakeAmexClient : IAmExClient
         
     public async Task<Result<(string TransactionId, TokenIssuanceData Response)>> Update(ModifyRequest payload) 
         => await Task.FromResult((string.Empty, new TokenIssuanceData()));
+
+
+    private readonly IOptionsMonitor<FakeAmexCardOptions> _options;
 }
