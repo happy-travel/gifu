@@ -7,11 +7,9 @@ public static class UniqueIdGenerator
 {
     public static string Get()
     {
-        return ShortId.Generate(new GenerationOptions
-        {
-            UseNumbers = true,
-            UseSpecialCharacters = false,
-            Length = 15
-        });
+        return ShortId.Generate(new GenerationOptions(useNumbers: true,
+            useSpecialCharacters: false,
+            length: 15
+        ));
     }
 }
