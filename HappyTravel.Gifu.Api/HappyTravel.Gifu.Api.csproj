@@ -29,7 +29,7 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="3.16.0" />
     <PackageReference Include="shortid" Version="3.0.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HappyTravel.Gifu.Data\HappyTravel.Gifu.Data.csproj" />
