@@ -65,6 +65,7 @@ public static class ConfigureServicesExtension
             .ConfigureAmExIssuer(vaultClient, builder.Configuration)  
             .ConfigureIxarisIssuer(vaultClient, builder.Configuration)
             .ConfigureVccServiceResolver()
+            .ConfigureVccService(builder.Configuration)
             .AddTransient<VccServiceResolver>()
             .AddTransient<IVccService, VccService>()
             .AddTransient<IClientService, ClientService>()

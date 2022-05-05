@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -105,7 +106,7 @@ public static class ServiceCollectionExtensions
 
 
     public static IServiceCollection ConfigureIxarisIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
-    {
+    {   
         var ixarisOptions = vaultClient.Get(configuration["IxarisOptions"])
             .GetAwaiter().GetResult();
 
@@ -146,6 +147,15 @@ public static class ServiceCollectionExtensions
             o.AmexCreditCardTypes = new() { CreditCardTypes.AmericanExpress };
             o.IxarisCurrencies = new() { Currencies.EUR };
             o.IxarisCreditCardTypes = new() { CreditCardTypes.Visa, CreditCardTypes.MasterCard };
+        });
+    }
+
+
+    public static IServiceCollection ConfigureVccService(this IServiceCollection services, IConfiguration configuration)
+    {
+        return services.Configure<VccServiceOptions>(o =>
+        {            
+            o.CurrenciesToConvert = configuration.GetSection("CurrenciesToConvert").Get<Dictionary<Currencies, Currencies>>();
         });
     }
 

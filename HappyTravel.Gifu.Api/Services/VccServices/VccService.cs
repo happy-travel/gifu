@@ -1,9 +1,11 @@
 ﻿using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
+using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Data.Models;
 using HappyTravel.Money.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +16,11 @@ namespace HappyTravel.Gifu.Api.Services.VccServices;
 
 public class VccService : IVccService
 {
-    public VccService(ILogger<VccService> logger, IVccIssueRecordsManager vccRecordsManager, 
-        VccServiceResolver serviceResolver)
+    public VccService(ILogger<VccService> logger, IOptions<VccServiceOptions> options,
+        IVccIssueRecordsManager vccRecordsManager, VccServiceResolver serviceResolver)
     {
         _logger = logger;
+        _options = options.Value;
         _vccRecordsManager = vccRecordsManager;
         _serviceResolver = serviceResolver;
     }
@@ -112,6 +115,7 @@ public class VccService : IVccService
 
 
     private readonly ILogger<VccService> _logger;
+    private readonly VccServiceOptions _options;
     private readonly VccServiceResolver _serviceResolver;
     private readonly IVccIssueRecordsManager _vccRecordsManager;
 }
