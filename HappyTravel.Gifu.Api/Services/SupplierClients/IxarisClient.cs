@@ -28,7 +28,7 @@ public class IxarisClient : IIxarisClient
     {
         var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/schedule/{scheduleReference}/cancel";
 
-        var (isSuccess, _, _, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Relative), securityToken);
+        var (isSuccess, _, _, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Absolute), securityToken);
 
         return isSuccess
             ? Result.Success()
@@ -42,7 +42,7 @@ public class IxarisClient : IIxarisClient
 
         var requestParams = new Dictionary<string, string>() { { "getCvv", "true" } };
 
-        return Get<VccDetails>(new Uri(endpoint, UriKind.Relative), requestParams, securityToken);
+        return Get<VccDetails>(new Uri(endpoint, UriKind.Absolute), requestParams, securityToken);
     }
 
 
@@ -50,14 +50,15 @@ public class IxarisClient : IIxarisClient
     {
         var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/virtualcards/{virtualCardFactoryName}";
 
-        return Post<IssueVccRequest, IssueVcc>(new Uri(endpoint, UriKind.Relative), issueVccRequest, securityToken);
+        return Post<IssueVccRequest, IssueVcc>(new Uri(endpoint, UriKind.Absolute), issueVccRequest, securityToken);
     }
 
 
     public async Task<Result<string>> Login()
     {
         var endpoint = $"{_options.Endpoint}/commons/auth/login";
-        var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+
+        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(endpoint, UriKind.Absolute))
         {
             Content = new FormUrlEncodedContent(new List<KeyValuePair<string?, string?>>() { // Because in the example Content-Type: application/x-www-form-urlencoded. Need to check.
                 new("apiKey", _options.ApiKey),
@@ -76,7 +77,7 @@ public class IxarisClient : IIxarisClient
     {
         var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/virtualcards/{cardReference}/delete";
 
-        var (isSuccess, _, data, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Relative), securityToken);
+        var (isSuccess, _, data, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Absolute), securityToken);
         return isSuccess
             ? data.TransactionReference
             : error;
@@ -87,7 +88,7 @@ public class IxarisClient : IIxarisClient
     {
         var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/schedule/load";
 
-        var (isSuccess, _, data, error) = await Post<ScheduleLoadRequest, IxarisData>(new Uri(endpoint, UriKind.Relative), scheduleLoadRequest, securityToken);
+        var (isSuccess, _, data, error) = await Post<ScheduleLoadRequest, IxarisData>(new Uri(endpoint, UriKind.Absolute), scheduleLoadRequest, securityToken);
         return isSuccess
             ? data.ScheduleReference
             : error;
@@ -98,7 +99,7 @@ public class IxarisClient : IIxarisClient
     {
         var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/schedule/{scheduleReference}/update";
 
-        var (isSuccess, _, data, error) = await Post<UpdateScheduleLoadRequest, IxarisData>(new Uri(endpoint, UriKind.Relative), updateScheduleLoadRequest, securityToken);
+        var (isSuccess, _, data, error) = await Post<UpdateScheduleLoadRequest, IxarisData>(new Uri(endpoint, UriKind.Absolute), updateScheduleLoadRequest, securityToken);
         return isSuccess
             ? data.ScheduleReference
             : error;
