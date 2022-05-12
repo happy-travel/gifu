@@ -27,7 +27,7 @@ public static class ConfigureServicesExtension
             Role = builder.Configuration["Vault:Role"]
         });
             
-        vaultClient.Login(EnvironmentVariableHelper.Get("Vault:Token", builder.Configuration), LoginMethods.Token).GetAwaiter().GetResult();
+        vaultClient.Login(EnvironmentVariableHelper.Get("Vault:Token", builder.Configuration)).GetAwaiter().GetResult();
 
         builder.Services
             .AddMemoryCache()            
