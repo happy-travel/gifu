@@ -1,4 +1,5 @@
 ﻿using System;
+using FloxDc.CacheFlow.Extensions;
 using HappyTravel.ErrorHandling.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Environment;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
@@ -26,9 +27,12 @@ public static class ConfigureServicesExtension
             Role = builder.Configuration["Vault:Role"]
         });
             
-        vaultClient.Login(EnvironmentVariableHelper.Get("Vault:Token", builder.Configuration)).GetAwaiter().GetResult();
+        vaultClient.Login(EnvironmentVariableHelper.Get("Vault:Token", builder.Configuration), LoginMethods.Token).GetAwaiter().GetResult();
 
         builder.Services
+            .AddMemoryCache()            
+            .AddStackExchangeRedisCache(options => { options.Configuration = EnvironmentVariableHelper.Get("Redis:Endpoint", builder.Configuration); })
+            .AddDoubleFlow()
             .AddMvcCore()
             .AddAuthorization(options =>
             {
@@ -66,6 +70,7 @@ public static class ConfigureServicesExtension
             .ConfigureIxarisIssuer(vaultClient, builder.Configuration)
             .ConfigureVccServiceResolver()
             .ConfigureVccService(builder.Configuration)
+            .ConfigureCurrencyConverterService(vaultClient, builder.Configuration)
             .AddTransient<VccServiceResolver>()
             .AddTransient<IVccService, VccService>()
             .AddTransient<IClientService, ClientService>()

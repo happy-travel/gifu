@@ -1,5 +1,4 @@
 ﻿using CSharpFunctionalExtensions;
-using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
@@ -34,7 +33,7 @@ public class IxarisService : IVccSupplierService
     }
 
 
-    public async Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
+    public async Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, MoneyAmount issuedMoneyAmount, string clientId, CancellationToken cancellationToken)
     {
         return await ValidateRequest()
             .Bind(() => Login())
@@ -60,9 +59,9 @@ public class IxarisService : IVccSupplierService
         {
             var issueVccRequest = new IssueVccRequest()
             {
-                Currency = request.MoneyAmount.Currency,
+                Currency = issuedMoneyAmount.Currency,
                 FundingAccountReference = _options.Account,
-                Amount = request.MoneyAmount.Amount
+                Amount = issuedMoneyAmount.Amount
             };
 
             var (isSuccess, _, data, error) = await _client.IssueVirtualCard(_securityToken, vccFactory.Value, issueVccRequest);
@@ -99,7 +98,7 @@ public class IxarisService : IVccSupplierService
             {
                 CardReference = result.VccDetails.CardReference,
                 FundingAccountReference = _options.Account,
-                Amount = request.MoneyAmount.Amount,
+                Amount = issuedMoneyAmount.Amount,
                 ScheduleDate = request.ActivationDate.ToString("yyyyy-MM-dd"),
                 ClearanceDate = request.DueDate.ToString("yyyy-MM-dd")
             };
@@ -139,6 +138,8 @@ public class IxarisService : IVccSupplierService
                 ReferenceCode = request.ReferenceCode,
                 Amount = request.MoneyAmount.Amount,
                 Currency = request.MoneyAmount.Currency,
+                IssuedAmount = issuedMoneyAmount.Amount,
+                IssuedCurrency = issuedMoneyAmount.Currency,
                 ActivationDate = new(int.Parse(result.VccDetails.StartDateYear), int.Parse(result.VccDetails.StartDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
                 DueDate = result.Vcc.Expiry,
                 ClientId = clientId,
@@ -185,7 +186,7 @@ public class IxarisService : IVccSupplierService
     }
 
 
-    public async Task<Result> DecreaseAmount(VccIssue Vcc, MoneyAmount amount)
+    public async Task<Result> DecreaseAmount(VccIssue Vcc, MoneyAmount amount, MoneyAmount issuedMoneyAmount)
     {
         return await Login()
             .Bind(() => _scheduleLoadRecordsManager.Get(Vcc.UniqueId))
@@ -198,7 +199,7 @@ public class IxarisService : IVccSupplierService
             var updateScheduleLoadRequest = new UpdateScheduleLoadRequest()
             {
                 FundingAccountReference = _options.Account,
-                Amount = amount.Amount,
+                Amount = issuedMoneyAmount.Amount,
                 ScheduleDate = Vcc.ActivationDate.ToString("yyyyy-MM-dd"),
                 ClearanceDate = Vcc.DueDate.ToString("yyyyy-MM-dd")
             };
@@ -217,11 +218,11 @@ public class IxarisService : IVccSupplierService
 
 
         Task SaveHistory(VccIssue vcc)
-            => _vccRecordsManager.DecreaseAmount(vcc, amount.Amount);
+            => _vccRecordsManager.DecreaseAmount(vcc, amount.Amount, issuedMoneyAmount.Amount);
     }
 
 
-    public Task<Result> Update(VccIssue Vcc, VccEditRequest request, string clientId)
+    public Task<Result> Update(VccIssue Vcc, VccEditRequest request, MoneyAmount? issuedMoneyAmount, string clientId)
     {
         return Task.FromResult(Result.Failure("VCC editing is not available for Ixaris suppler"));
     }

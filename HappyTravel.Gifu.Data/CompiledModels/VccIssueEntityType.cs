@@ -68,6 +68,18 @@ namespace HappyTravel.Gifu.Data.CompiledModels
                 propertyInfo: typeof(VccIssue).GetProperty("DueDate", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
                 fieldInfo: typeof(VccIssue).GetField("<DueDate>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
 
+            var issuedAmount = runtimeEntityType.AddProperty(
+                "IssuedAmount",
+                typeof(decimal),
+                propertyInfo: typeof(VccIssue).GetProperty("IssuedAmount", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+                fieldInfo: typeof(VccIssue).GetField("<IssuedAmount>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
+
+            var issuedCurrency = runtimeEntityType.AddProperty(
+                "IssuedCurrency",
+                typeof(Currencies),
+                propertyInfo: typeof(VccIssue).GetProperty("IssuedCurrency", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+                fieldInfo: typeof(VccIssue).GetField("<IssuedCurrency>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
+
             var modified = runtimeEntityType.AddProperty(
                 "Modified",
                 typeof(DateTimeOffset),

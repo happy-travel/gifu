@@ -6,6 +6,7 @@ using System.Reflection;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Api.Services.CurrencyConverter;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
 using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data;
@@ -154,9 +155,24 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureVccService(this IServiceCollection services, IConfiguration configuration)
     {
         return services.Configure<VccServiceOptions>(o =>
-        {            
+        {
             o.CurrenciesToConvert = configuration.GetSection("CurrenciesToConvert").Get<Dictionary<Currencies, Currencies>>();
         });
+    }
+
+
+    public static IServiceCollection ConfigureCurrencyConverterService(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
+    {
+        var currencyConverterOptions = vaultClient.Get(configuration["CurrencyConverter"]).GetAwaiter().GetResult();
+
+        services.AddHttpClient(CurrencyConverterConstants.CurrencyConverterClient, client =>
+        {
+            client.BaseAddress = new Uri(currencyConverterOptions["endPoint"]);
+        });
+
+        return services.AddTransient<CurrencyConverterClient>()
+            .AddTransient<CurrencyConverterService>()
+            .AddTransient<CurrencyConverterStorage>();
     }
 
 

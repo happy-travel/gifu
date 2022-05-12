@@ -7,6 +7,7 @@ using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Gifu.Data.Models;
+using HappyTravel.Money.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HappyTravel.Gifu.Api.Services;
@@ -53,13 +54,16 @@ public class VccIssueRecordsManager : IVccIssueRecordsManager
     }
 
 
-    public Task Update(VccIssue vccIssue, VccEditRequest changes)
+    public Task Update(VccIssue vccIssue, VccEditRequest changes, MoneyAmount? issuedMoneyAmount)
     {
         var now = DateTimeOffset.UtcNow;
         vccIssue.Modified = now;
                 
         if (changes.MoneyAmount is not null) 
             vccIssue.Amount = changes.MoneyAmount.Value.Amount;
+
+        if(issuedMoneyAmount is not null)
+            vccIssue.IssuedAmount = issuedMoneyAmount.Value.Amount;
 
         if (changes.ActivationDate is not null) 
             vccIssue.ActivationDate = changes.ActivationDate.Value;
@@ -79,11 +83,12 @@ public class VccIssueRecordsManager : IVccIssueRecordsManager
     }
 
 
-    public Task DecreaseAmount(VccIssue vccIssue, decimal amount)
+    public Task DecreaseAmount(VccIssue vccIssue, decimal amount, decimal issuedAmount)
     {
         var now = DateTimeOffset.UtcNow;
         var amountBefore = vccIssue.Amount;
         vccIssue.Amount = amount;
+        vccIssue.IssuedAmount = issuedAmount;
         vccIssue.Modified = now;
                 
         _context.AmountChangesHistories.Add(new AmountChangesHistory
