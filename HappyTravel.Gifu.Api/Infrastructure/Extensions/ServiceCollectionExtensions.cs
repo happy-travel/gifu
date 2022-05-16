@@ -237,16 +237,6 @@ public static class ServiceCollectionExtensions
                 options.Authority = authorityOptions["authorityUrl"];
                 options.Audience = authorityOptions["apiName"];
                 options.RequireHttpsMetadata = true;
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        var func = IdentityModel.AspNetCore.OAuth2Introspection.TokenRetrieval.FromAuthorizationHeader();
-
-                        context.Token = func(context.Request);
-                        return Task.CompletedTask;
-                    }
-                };
             });
 
         return services;
@@ -259,7 +249,7 @@ public static class ServiceCollectionExtensions
 
         return HttpPolicyExtensions
             .HandleTransientHttpError()
-            .OrResult(msg => msg.StatusCode == HttpStatusCode.ServiceUnavailable)
+            .OrResult(msg => msg.StatusCode == HttpStatusCode.ServiceUnavailable || msg.StatusCode == HttpStatusCode.Unauthorized)
             .WaitAndRetryAsync(3, attempt
                 => TimeSpan.FromSeconds(Math.Pow(1.5, attempt)) + TimeSpan.FromMilliseconds(jitter.Next(0, 100)));
     }
