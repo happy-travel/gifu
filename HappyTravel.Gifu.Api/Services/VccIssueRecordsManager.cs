@@ -62,7 +62,7 @@ public class VccIssueRecordsManager : IVccIssueRecordsManager
         if (changes.MoneyAmount is not null) 
             vccIssue.Amount = changes.MoneyAmount.Value.Amount;
 
-        if(issuedMoneyAmount is not null)
+        if (issuedMoneyAmount is not null)
             vccIssue.IssuedAmount = issuedMoneyAmount.Value.Amount;
 
         if (changes.ActivationDate is not null) 

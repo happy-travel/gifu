@@ -1,12 +1,11 @@
 ﻿using CSharpFunctionalExtensions;
+using HappyTravel.Gifu.Api.Infrastructure;
 using HappyTravel.Gifu.Api.Models.CurrencyConverter;
 using HappyTravel.Money.Enums;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace HappyTravel.Gifu.Api.Services.CurrencyConverter;
@@ -29,24 +28,12 @@ public class CurrencyConverterClient
 
 
     private Task<Result<TResponse>> Get<TResponse>(Uri url)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", GetToken());
-
-        return Send<TResponse>(request);
-    }
-
-
-    private string GetToken()
-    {
-        var authorizationHeader = _httpContext.Request.Headers.Authorization[0];
-        return authorizationHeader.Replace("Bearer ", string.Empty);
-    }
+        => Send<TResponse>(new HttpRequestMessage(HttpMethod.Get, url));
 
 
     private async Task<Result<TResponse>> Send<TResponse>(HttpRequestMessage request)
     {
-        var client = _httpClientFactory.CreateClient(CurrencyConverterConstants.CurrencyConverterClient);
+        var client = _httpClientFactory.CreateClient(HttpClientNames.CurrencyConverterClient);
         using var response = await client.SendAsync(request);
 
         var content = await response.Content.ReadAsStringAsync();
