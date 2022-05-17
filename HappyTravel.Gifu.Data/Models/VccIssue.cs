@@ -10,6 +10,8 @@ public class VccIssue
     public string ReferenceCode { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public Currencies Currency { get; set; }
+    public decimal IssuedAmount { get; set; }
+    public Currencies IssuedCurrency { get; set; }
     public DateTimeOffset ActivationDate { get; set; }
     public DateTimeOffset DueDate { get; set; }
     public string ClientId { get; set; } = string.Empty;

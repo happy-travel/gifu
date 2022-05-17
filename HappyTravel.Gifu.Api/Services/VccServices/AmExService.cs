@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 using CSharpFunctionalExtensions;
-using FluentValidation;
 using HappyTravel.Gifu.Api.Infrastructure.Extensions;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
@@ -34,10 +33,10 @@ public class AmExService : IVccSupplierService
     }
 
 
-    public async Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, string clientId, CancellationToken cancellationToken)
+    public async Task<Result<VirtualCreditCard>> Issue(VccIssueRequest request, MoneyAmount issuedMoneyAmount, string clientId, CancellationToken cancellationToken)
     {           
         return await ValidateRequest()
-            .Bind(() => _accountsService.GetAccountId(request.MoneyAmount.Currency))
+            .Bind(() => _accountsService.GetAccountId(issuedMoneyAmount.Currency))
             .Bind(CreateCard)
             .Finally(SaveResult);
 
@@ -58,7 +57,7 @@ public class AmExService : IVccSupplierService
             var uniqueId = UniqueIdGenerator.Get();
             var payload = RequestGenerator.GenerateCreateTokenRequest(uniqueId: uniqueId,
                 accountId: accountId,
-                amount: request.MoneyAmount,
+                amount: issuedMoneyAmount,
                 startDate: request.ActivationDate,
                 endDate: request.DueDate,
                 customFields: _customFieldsMapper.Map(request.ReferenceCode, request.SpecialValues));
@@ -80,7 +79,7 @@ public class AmExService : IVccSupplierService
             }
 
             var now = DateTime.UtcNow;
-                
+
             await _vccRecordsManager.Add(new VccIssue
             {
                 TransactionId = result.Value.TransactionId,
@@ -88,6 +87,8 @@ public class AmExService : IVccSupplierService
                 ReferenceCode = request.ReferenceCode,
                 Amount = request.MoneyAmount.Amount,
                 Currency = request.MoneyAmount.Currency,
+                IssuedAmount = issuedMoneyAmount.Amount,
+                IssuedCurrency = issuedMoneyAmount.Currency,
                 ActivationDate = request.ActivationDate,
                 DueDate = request.DueDate,
                 ClientId = clientId,
@@ -136,7 +137,7 @@ public class AmExService : IVccSupplierService
     }
 
         
-    public async Task<Result> DecreaseAmount(VccIssue Vcc, MoneyAmount amount)
+    public async Task<Result> DecreaseAmount(VccIssue Vcc, MoneyAmount amount, MoneyAmount issuedMoneyAmount)
     {
         return await GetAccountId(Vcc)
             .Bind(DecreaseCardAmount)
@@ -147,7 +148,7 @@ public class AmExService : IVccSupplierService
         {
             var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: Vcc.CardNumber,
                 accountId: AccountId,
-                tokenAmount: amount,
+                tokenAmount: issuedMoneyAmount,
                 tokenStartDate: null,
                 tokenDueDate: null);
                 
@@ -165,11 +166,11 @@ public class AmExService : IVccSupplierService
 
 
         Task SaveHistory(VccIssue vcc)
-            => _vccRecordsManager.DecreaseAmount(vcc, amount.Amount);
+            => _vccRecordsManager.DecreaseAmount(vcc, amount.Amount, issuedMoneyAmount.Amount);
     }
         
         
-    public async Task<Result> Update(VccIssue vcc, VccEditRequest request, string clientId)
+    public async Task<Result> Update(VccIssue vcc, VccEditRequest request, MoneyAmount? issuedMoneyAmount, string clientId)
     {
         return await IsDirectEditEnabled()               
             .Bind(() => GetAccountId(vcc))
@@ -191,7 +192,7 @@ public class AmExService : IVccSupplierService
         {
             var payload = RequestGenerator.GenerateModifyTokenRequest(tokenNumber: vcc.CardNumber,
                 accountId: AccountId,
-                tokenAmount: request.MoneyAmount,
+                tokenAmount: issuedMoneyAmount,
                 tokenStartDate: request.ActivationDate,
                 tokenDueDate: request.DueDate);
 
@@ -208,13 +209,13 @@ public class AmExService : IVccSupplierService
 
 
         Task SaveRequest()
-            => _vccRecordsManager.Update(vcc, request);
+            => _vccRecordsManager.Update(vcc, request, issuedMoneyAmount);
     }
         
         
     private Result<string> GetAccountId(VccIssue vcc)
     {
-        var accountId = _accountsService.GetAccountId(vcc.Currency);
+        var accountId = _accountsService.GetAccountId(vcc.IssuedCurrency);
 
         return accountId.IsSuccess
             ? accountId.Value

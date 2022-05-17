@@ -1,10 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
+using System.Threading.Tasks;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Services;
+using HappyTravel.Gifu.Api.Services.CurrencyConverter;
 using HappyTravel.Gifu.Api.Services.SupplierClients;
 using HappyTravel.Gifu.Api.Services.VccServices;
 using HappyTravel.Gifu.Data;
@@ -12,13 +17,16 @@ using HappyTravel.Gifu.Data.CompiledModels;
 using HappyTravel.HttpRequestLogger;
 using HappyTravel.Money.Enums;
 using HappyTravel.VaultClient;
+using IdentityModel.Client;
 using IdentityServer4.AccessTokenValidation;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using Polly;
+using Polly.Extensions.Http;
 
 namespace HappyTravel.Gifu.Api.Infrastructure.Extensions;
 
@@ -105,7 +113,7 @@ public static class ServiceCollectionExtensions
 
 
     public static IServiceCollection ConfigureIxarisIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
-    {
+    {   
         var ixarisOptions = vaultClient.Get(configuration["IxarisOptions"])
             .GetAwaiter().GetResult();
 
@@ -150,6 +158,49 @@ public static class ServiceCollectionExtensions
     }
 
 
+    public static IServiceCollection ConfigureVccService(this IServiceCollection services, IConfiguration configuration)
+    {
+        return services.Configure<VccServiceOptions>(o=>
+        {
+            o.CurrenciesToConvert = configuration.GetSection("CurrenciesToConvert").Get<Dictionary<Currencies, Currencies>>();
+        });
+    }
+
+
+    public static IServiceCollection ConfigureCurrencyConverterService(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
+    {
+        var authorityOptions = vaultClient.Get(configuration["AuthorityOptions"]).GetAwaiter().GetResult();
+
+        var clientOptions = vaultClient.Get(configuration["Edo:IdentityClient:Options"]).GetAwaiter().GetResult();
+        var identityUri = new Uri(new Uri(authorityOptions["authorityUrl"]), "/connect/token").ToString();
+        var clientId = clientOptions["clientId"];
+        var clientSecret = clientOptions["clientSecret"];
+
+        services.AddAccessTokenManagement(options =>
+        {
+            options.Client.Clients.Add(HttpClientNames.AccessTokenClient, new ClientCredentialsTokenRequest
+            {
+                Address = identityUri,
+                ClientId = clientId,
+                ClientSecret = clientSecret,
+            });
+        });
+
+        var currencyConverterOptions = vaultClient.Get(configuration["CurrencyConverter"]).GetAwaiter().GetResult();
+
+        services.AddClientAccessTokenHttpClient(HttpClientNames.CurrencyConverterClient, HttpClientNames.AccessTokenClient, client =>
+        {
+            client.BaseAddress = new Uri(currencyConverterOptions["endPoint"]);
+        })
+            .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+            .AddPolicyHandler(GetDefaultRetryPolicy());
+
+        return services.AddTransient<CurrencyConverterClient>()
+            .AddTransient<CurrencyConverterService>()
+            .AddTransient<CurrencyConverterStorage>();
+    }
+
+
     public static IServiceCollection ConfigureDatabaseOptions(this IServiceCollection services, VaultClient.VaultClient vaultClient, 
         IConfiguration configuration)
     {
@@ -179,16 +230,27 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureAuthentication(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
     {
         var authorityOptions = vaultClient.Get(configuration["AuthorityOptions"]).GetAwaiter().GetResult();
-            
+
         services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
-            .AddIdentityServerAuthentication(options =>
+            .AddJwtBearer(options =>
             {
                 options.Authority = authorityOptions["authorityUrl"];
-                options.ApiName = authorityOptions["apiName"];
+                options.Audience = authorityOptions["apiName"];
                 options.RequireHttpsMetadata = true;
-                options.SupportedTokens = SupportedTokens.Jwt;
             });
 
         return services;
+    }
+
+
+    private static IAsyncPolicy<HttpResponseMessage> GetDefaultRetryPolicy()
+    {
+        var jitter = new Random();
+
+        return HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .OrResult(msg => msg.StatusCode == HttpStatusCode.ServiceUnavailable || msg.StatusCode == HttpStatusCode.Unauthorized)
+            .WaitAndRetryAsync(3, attempt
+                => TimeSpan.FromSeconds(Math.Pow(1.5, attempt)) + TimeSpan.FromMilliseconds(jitter.Next(0, 100)));
     }
 }

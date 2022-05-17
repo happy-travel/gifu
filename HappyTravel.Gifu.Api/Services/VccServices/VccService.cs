@@ -1,9 +1,13 @@
 ﻿using CSharpFunctionalExtensions;
 using HappyTravel.Gifu.Api.Infrastructure.Logging;
+using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
+using HappyTravel.Gifu.Api.Services.CurrencyConverter;
 using HappyTravel.Gifu.Data.Models;
+using HappyTravel.Money.Enums;
 using HappyTravel.Money.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +18,14 @@ namespace HappyTravel.Gifu.Api.Services.VccServices;
 
 public class VccService : IVccService
 {
-    public VccService(ILogger<VccService> logger, IVccIssueRecordsManager vccRecordsManager, 
-        VccServiceResolver serviceResolver)
+    public VccService(ILogger<VccService> logger, IOptions<VccServiceOptions> options,
+        IVccIssueRecordsManager vccRecordsManager, VccServiceResolver serviceResolver, CurrencyConverterService currencyConverterService)
     {
         _logger = logger;
+        _options = options.Value;
         _vccRecordsManager = vccRecordsManager;
         _serviceResolver = serviceResolver;
+        _currencyConverterService = currencyConverterService;
     }
 
 
@@ -27,8 +33,35 @@ public class VccService : IVccService
     {
         _logger.LogVccIssueRequestStarted(request.ReferenceCode, request.MoneyAmount.Amount, request.MoneyAmount.Currency.ToString());
 
-        return await _serviceResolver.ResolveService(request.Types, request.MoneyAmount.Currency)
-            .Bind(vccService => vccService.Issue(request, clientId, cancellationToken));
+        MoneyAmount issuedMoneyAmount;
+        var (isSuccess, _, vccService, error) = ResolveService(request.MoneyAmount.Currency);
+
+        if (isSuccess)
+        {
+            issuedMoneyAmount = request.MoneyAmount;
+            return await vccService.Issue(request, issuedMoneyAmount, clientId, cancellationToken);
+        }
+
+        if (_options.CurrenciesToConvert.TryGetValue(request.MoneyAmount.Currency, out var issuedCurrency))
+        {
+            var (getRateSuccess, _, conversionResult, getRateError) = await _currencyConverterService.ConvertToCurrency(request.MoneyAmount, issuedCurrency);
+
+            if (getRateSuccess)
+            {
+                issuedMoneyAmount = conversionResult;
+
+                return await ResolveService(issuedCurrency)
+                    .Bind(vccService => vccService.Issue(request, issuedMoneyAmount, clientId, cancellationToken));
+            }
+            
+            return Result.Failure<VirtualCreditCard>(getRateError);
+        }
+
+        return Result.Failure<VirtualCreditCard>(error);
+
+
+        Result<IVccSupplierService> ResolveService(Currencies currency)
+            => _serviceResolver.ResolveService(request.Types, currency);
     }
 
 
@@ -54,10 +87,14 @@ public class VccService : IVccService
     {
         _logger.LogVccModifyAmountRequestStarted(referenceCode, amount.Amount);
 
+        if (amount.Amount == 0m)
+            return Result.Success();
+
         return await _vccRecordsManager.Get(referenceCode)
             .Bind(ValidateRequest)
             .Bind(GetVccService)
             .Bind(DecreaseCardAmount);
+
 
         Result<VccIssue> ValidateRequest(VccIssue vcc)
         {
@@ -71,8 +108,16 @@ public class VccService : IVccService
         }
 
 
-        Task<Result> DecreaseCardAmount((VccIssue Vcc, IVccSupplierService vccService) result)
-            => result.vccService.DecreaseAmount(result.Vcc, amount);
+        async Task<Result> DecreaseCardAmount((VccIssue, IVccSupplierService) result)
+        {
+            var (vcc, vccService) = result;
+
+            if (vcc.IssuedCurrency == amount.Currency)
+                return await vccService.DecreaseAmount(vcc, amount, amount);
+
+            return await _currencyConverterService.ConvertToCurrency(amount, vcc.IssuedCurrency)
+                .Bind((issuedMoneyAmount) => vccService.DecreaseAmount(vcc, amount, issuedMoneyAmount));
+        }
     }
 
 
@@ -96,8 +141,16 @@ public class VccService : IVccService
         }
 
 
-        Task<Result> UpdateCard((VccIssue Vcc, IVccSupplierService vccService) result)
-            => result.vccService.Update(result.Vcc, request, clientId);
+        async Task<Result> UpdateCard((VccIssue, IVccSupplierService) result)
+        {
+            var (vcc, vccService) = result;
+
+            if (request.MoneyAmount is not null && request.MoneyAmount.Value.Currency != vcc.IssuedCurrency)
+                return await _currencyConverterService.ConvertToCurrency(request.MoneyAmount.Value, vcc.IssuedCurrency)
+                    .Bind((issuedMoneyAmount) => vccService.Update(vcc, request, issuedMoneyAmount, clientId));
+
+            return await vccService.Update(vcc, request, request.MoneyAmount, clientId);
+        }
     }
 
 
@@ -112,6 +165,8 @@ public class VccService : IVccService
 
 
     private readonly ILogger<VccService> _logger;
+    private readonly VccServiceOptions _options;
     private readonly VccServiceResolver _serviceResolver;
     private readonly IVccIssueRecordsManager _vccRecordsManager;
+    private readonly CurrencyConverterService _currencyConverterService;
 }
