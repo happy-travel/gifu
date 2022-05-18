@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Services;
@@ -19,7 +17,6 @@ using HappyTravel.Money.Enums;
 using HappyTravel.VaultClient;
 using IdentityModel.Client;
 using IdentityServer4.AccessTokenValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -159,12 +156,7 @@ public static class ServiceCollectionExtensions
 
 
     public static IServiceCollection ConfigureVccService(this IServiceCollection services, IConfiguration configuration)
-    {
-        return services.Configure<VccServiceOptions>(o=>
-        {
-            o.CurrenciesToConvert = configuration.GetSection("CurrenciesToConvert").Get<Dictionary<Currencies, Currencies>>();
-        });
-    }
+        => services.Configure<VccServiceOptions>(configuration.GetSection("VccServiceOptions"));
 
 
     public static IServiceCollection ConfigureCurrencyConverterService(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
