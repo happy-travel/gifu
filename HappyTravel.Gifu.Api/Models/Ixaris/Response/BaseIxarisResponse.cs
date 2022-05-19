@@ -2,7 +2,7 @@
 
 namespace HappyTravel.Gifu.Api.Models.Ixaris.Response;
 
-public readonly struct BaseIxarisResponse<T>
+public class BaseIxarisResponse<T>
 {
     [JsonPropertyName("envelope")]
     public Envelope Envelope { get; init; }

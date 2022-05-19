@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Api.Services;
@@ -19,7 +18,6 @@ using HappyTravel.Money.Enums;
 using HappyTravel.VaultClient;
 using IdentityModel.Client;
 using IdentityServer4.AccessTokenValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -78,12 +76,6 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection ConfigureAmExIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
     {
-        var amExOptions = vaultClient.Get(configuration["AmExOptions"])
-            .GetAwaiter().GetResult();
-            
-        var amExAccounts = vaultClient.Get(configuration["AmexAccounts"])
-            .GetAwaiter().GetResult();
-
         if (configuration.GetValue<bool>("Testing:UseFakeAmexClient"))
         {
             services.AddTransient<IAmExClient, FakeAmexClient>();
@@ -94,6 +86,11 @@ public static class ServiceCollectionExtensions
                 .AddHttpClientRequestLogging(configuration);
         }
 
+        var amExOptions = vaultClient.Get(configuration["AmExOptions"])
+            .GetAwaiter().GetResult();
+            
+        var amExAccounts = vaultClient.Get(configuration["AmexAccounts"])
+            .GetAwaiter().GetResult();  
         var accounts = amExAccounts.Select(a => new
             {
                 Currency = Enum.Parse<Currencies>(a.Key),
@@ -113,15 +110,24 @@ public static class ServiceCollectionExtensions
 
 
     public static IServiceCollection ConfigureIxarisIssuer(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
-    {   
+    {
         var ixarisOptions = vaultClient.Get(configuration["IxarisOptions"])
             .GetAwaiter().GetResult();
 
-        services.AddHttpClient<IIxarisClient, IxarisClient>()
-            .AddHttpClientRequestLogging(configuration);
+        services.AddHttpClient(HttpClientNames.IxarisClient, client =>
+        {
+            client.BaseAddress = new Uri(ixarisOptions["endPoint"]);
+        })
+        .AddHttpClientRequestLogging(configuration);
 
-        var ixarisAccount = vaultClient.Get(configuration["IxarisAccount"])
+        var ixarisAccounts = vaultClient.Get(configuration["IxarisAccounts"])
             .GetAwaiter().GetResult();
+        var accounts = ixarisAccounts.Select(o => new
+            {
+                Currency = Enum.Parse<Currencies>(o.Key),
+                AccountId = o.Value
+            })
+            .ToDictionary(a => a.Currency, a => a.AccountId);
 
         var ixarisVccFactoryNames = vaultClient.Get(configuration["IxarisVccFactoryNames"])
             .GetAwaiter().GetResult();
@@ -135,24 +141,32 @@ public static class ServiceCollectionExtensions
 
         return services.Configure<IxarisOptions>(o =>
             {
-                o.Endpoint = ixarisOptions["endPoint"];
                 o.ApiKey = ixarisOptions["apiKey"];
                 o.Password = ixarisOptions["password"];
-                o.Account = ixarisAccount["fundingAccountReference"];
+                o.Accounts = accounts;
                 o.VccFactoryNames = vccFactoryNames;
                 o.DefaultVccType = CreditCardTypes.Visa;
             })
-            .AddScoped<IVccSupplierService, IxarisService>();
+            .AddScoped<IVccSupplierService, IxarisService>()
+            .AddTransient<IIxarisClient, IxarisClient>();
     }
 
 
-    public static IServiceCollection ConfigureVccServiceResolver(this IServiceCollection services)
+    public static IServiceCollection ConfigureVccServiceResolver(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
     {
+        var amExAccounts = vaultClient.Get(configuration["AmexAccounts"])
+            .GetAwaiter().GetResult();
+        var amExCurrencies = amExAccounts.Select(a => Enum.Parse<Currencies>(a.Key)).ToList();
+
+        var ixarisAccounts = vaultClient.Get(configuration["IxarisAccounts"])
+            .GetAwaiter().GetResult();
+        var ixarisCurrencies = ixarisAccounts.Select(a => Enum.Parse<Currencies>(a.Key)).ToList();
+
         return services.Configure<VccServiceResolverOptions>(o =>
         {
-            o.AmexCurrencies = new() { Currencies.AED, Currencies.USD };
+            o.AmexCurrencies = amExCurrencies;
             o.AmexCreditCardTypes = new() { CreditCardTypes.AmericanExpress };
-            o.IxarisCurrencies = new() { Currencies.EUR };
+            o.IxarisCurrencies = ixarisCurrencies;
             o.IxarisCreditCardTypes = new() { CreditCardTypes.Visa, CreditCardTypes.MasterCard };
         });
     }
@@ -160,7 +174,7 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection ConfigureVccService(this IServiceCollection services, IConfiguration configuration)
     {
-        return services.Configure<VccServiceOptions>(o=>
+        return services.Configure<VccServiceOptions>(o =>
         {
             o.CurrenciesToConvert = configuration.GetSection("CurrenciesToConvert").Get<Dictionary<Currencies, Currencies>>();
         });

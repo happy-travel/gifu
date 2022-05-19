@@ -27,9 +27,8 @@ public class VccServiceResolver
         if (_options.AmexCurrencies.Contains(currency) && _options.AmexCreditCardTypes.Any(type => types.Contains(type)))
             return GetService(typeof(AmExService));
 
-        // Not used yet
-        //if (_options.IxarisCurrencies.Contains(currency) && _options.IxarisCreditCardTypes.Any(type => types.Contains(type)))
-        //    return GetService(typeof(IxarisService));
+        if (_options.IxarisCurrencies.Contains(currency) && _options.IxarisCreditCardTypes.Any(type => types.Contains(type)))
+            return GetService(typeof(IxarisService));
 
         return Result.Failure<IVccSupplierService>($"Unable to issue a VCC for currency `{currency}` and VccVendors `{string.Join(", ", types)}`");
     }
@@ -40,9 +39,8 @@ public class VccServiceResolver
         if (_options.AmexCurrencies.Contains(currency))
             return GetService(typeof(AmExService));
 
-        // Not used yet
-        //if (_options.IxarisCurrencies.Contains(currency))
-        //    return GetService(typeof(IxarisService));
+        if (_options.IxarisCurrencies.Contains(currency))
+            return GetService(typeof(IxarisService));
 
         return Result.Failure<IVccSupplierService>($"Unable to issue a VCC for currency `{currency}`");
     }
@@ -51,7 +49,8 @@ public class VccServiceResolver
     public Result<IVccSupplierService> ResolveServiceByVccVendor(VccVendors vccVendor)
         => vccVendor switch
         {
-            VccVendors.AmericanExpress => GetService(typeof(AmExService)),                
+            VccVendors.AmericanExpress => GetService(typeof(AmExService)),
+            VccVendors.Ixaris => GetService(typeof(IxarisService)),
             _ => Result.Failure<IVccSupplierService>($"Unable to issue a VCC for VccVendor `{vccVendor}`")
         };
 

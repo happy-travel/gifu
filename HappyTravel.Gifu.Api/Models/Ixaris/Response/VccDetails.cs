@@ -2,7 +2,7 @@
 
 namespace HappyTravel.Gifu.Api.Models.Ixaris.Response;
 
-public readonly struct VccDetails
+public class VccDetails
 {
     [JsonPropertyName("cardholderName")]
     public string CardholderName { get; init; }

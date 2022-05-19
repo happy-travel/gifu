@@ -34,6 +34,12 @@ namespace HappyTravel.Gifu.Data.CompiledModels
                 propertyInfo: typeof(IxarisScheduleLoad).GetProperty("CardReference", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
                 fieldInfo: typeof(IxarisScheduleLoad).GetField("<CardReference>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
 
+            var clearanceDate = runtimeEntityType.AddProperty(
+                "ClearanceDate",
+                typeof(DateTimeOffset),
+                propertyInfo: typeof(IxarisScheduleLoad).GetProperty("ClearanceDate", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+                fieldInfo: typeof(IxarisScheduleLoad).GetField("<ClearanceDate>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
+
             var created = runtimeEntityType.AddProperty(
                 "Created",
                 typeof(DateTimeOffset),
@@ -45,6 +51,12 @@ namespace HappyTravel.Gifu.Data.CompiledModels
                 typeof(DateTimeOffset),
                 propertyInfo: typeof(IxarisScheduleLoad).GetProperty("Modified", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
                 fieldInfo: typeof(IxarisScheduleLoad).GetField("<Modified>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
+
+            var scheduleDate = runtimeEntityType.AddProperty(
+                "ScheduleDate",
+                typeof(DateTimeOffset),
+                propertyInfo: typeof(IxarisScheduleLoad).GetProperty("ScheduleDate", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly),
+                fieldInfo: typeof(IxarisScheduleLoad).GetField("<ScheduleDate>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly));
 
             var scheduleReference = runtimeEntityType.AddProperty(
                 "ScheduleReference",
