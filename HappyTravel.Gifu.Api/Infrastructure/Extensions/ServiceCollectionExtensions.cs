@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -173,12 +172,7 @@ public static class ServiceCollectionExtensions
 
 
     public static IServiceCollection ConfigureVccService(this IServiceCollection services, IConfiguration configuration)
-    {
-        return services.Configure<VccServiceOptions>(o =>
-        {
-            o.CurrenciesToConvert = configuration.GetSection("CurrenciesToConvert").Get<Dictionary<Currencies, Currencies>>();
-        });
-    }
+        => services.Configure<VccServiceOptions>(configuration.GetSection("VccServiceOptions"));
 
 
     public static IServiceCollection ConfigureCurrencyConverterService(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
