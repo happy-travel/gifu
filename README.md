@@ -1,4 +1,4 @@
-# Gifu.
+# Gifu
 Virtual credit card issuer
 
 ### Summary
