@@ -2,14 +2,14 @@
 
 namespace HappyTravel.Gifu.Api.Models.Ixaris.Response;
 
-public readonly struct LoginData
+public class LoginData
 {
     [JsonPropertyName("userReference")]
-    public readonly string UserReference { get; init; }
+    public string UserReference { get; init; }
 
     [JsonPropertyName("securityToken")]
-    public readonly string SecurityToken { get; init; }
+    public string SecurityToken { get; init; }
 
     [JsonPropertyName("dormant")]
-    public readonly bool Dormant { get; init; }
+    public string Dormant { get; init; }
 }

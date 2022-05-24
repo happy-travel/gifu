@@ -60,7 +60,7 @@ public class IxarisService : IVccSupplierService
             var issueVccRequest = new IssueVccRequest()
             {
                 Currency = issuedMoneyAmount.Currency,
-                FundingAccountReference = _options.Account,
+                FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
                 Amount = issuedMoneyAmount.Amount
             };
 
@@ -73,34 +73,38 @@ public class IxarisService : IVccSupplierService
             }
 
             _logger.LogVccIssueRequestFailure(request.ReferenceCode, error);
-            return Result.Failure<(IssueVcc, CreditCardTypes)>($"Error creating VCC for reference code `{request.ReferenceCode}`");
+            return Result.Failure<(IssueVcc, CreditCardTypes)>(error);
         }
 
 
-        async Task<Result<(string, VccDetails, VirtualCreditCard)>> GetCardDetails((IssueVcc IssueVcc, CreditCardTypes VccType) result)
-        {   
-            var (isSuccess, _, response, error) = await _client.GetVirtualCardDetails(_securityToken, result.IssueVcc.CardReference);
+        async Task<Result<(string, VccDetails, VirtualCreditCard)>> GetCardDetails((IssueVcc, CreditCardTypes) result)
+        {
+            var (issueVcc, vccType) = result;
+
+            var (isSuccess, _, response, error) = await _client.GetVirtualCardDetails(_securityToken, issueVcc.CardReference);
 
             return isSuccess
-                ? (result.IssueVcc.TransactionReference, response,
+                ? (issueVcc.TransactionReference, response,
                     new(number: response.CardNumber,
                         expiry: new(int.Parse(response.ExpiryDateYear), int.Parse(response.ExpiryDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
                         holder: response.CardholderName,
                         code: response.Cvv,
-                        type: result.VccType))
+                        type: vccType))
                 : Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
         }
 
 
-        async Task<Result<(string, VccDetails, VirtualCreditCard)>> ScheduleLoadCard((string TransactionId, VccDetails VccDetails, VirtualCreditCard Vcc) result)
+        async Task<Result<(string, VccDetails, VirtualCreditCard)>> ScheduleLoadCard((string, VccDetails, VirtualCreditCard) result)
         {
+            var (transactionId, vccDetails, vcc) = result;
+
             var scheduleLoadRequest = new ScheduleLoadRequest()
             {
-                CardReference = result.VccDetails.CardReference,
-                FundingAccountReference = _options.Account,
+                CardReference = vccDetails.CardReference,
+                FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
                 Amount = issuedMoneyAmount.Amount,
-                ScheduleDate = request.ActivationDate.ToString("yyyyy-MM-dd"),
-                ClearanceDate = request.DueDate.ToString("yyyy-MM-dd")
+                ScheduleDate = request.ActivationDate.ToUniversalTime().ToString("yyyy-MM-dd"),
+                ClearanceDate = request.DueDate.ToUniversalTime().ToString("yyyy-MM-dd")
             };
 
             var (isSuccess, _, scheduleReference, error) = await _client.ScheduleLoad(_securityToken, scheduleLoadRequest);
@@ -112,7 +116,9 @@ public class IxarisService : IVccSupplierService
                 var scheduleLoad = new IxarisScheduleLoad()
                 {
                     ScheduleReference = scheduleReference,
-                    CardReference = result.VccDetails.CardReference,
+                    CardReference = vccDetails.CardReference,
+                    ScheduleDate = request.ActivationDate.ToUniversalTime(),
+                    ClearanceDate = request.DueDate.ToUniversalTime(),
                     Created = now,
                     Modified = now,
                     Status = IxarisScheduleLoadStatuses.Active
@@ -120,30 +126,32 @@ public class IxarisService : IVccSupplierService
 
                 await _scheduleLoadRecordsManager.Add(scheduleLoad);
 
-                return (result.TransactionId, result.VccDetails, result.Vcc);
+                return (transactionId, vccDetails, vcc);
             }
 
             return Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
         }
 
 
-        async Task<Result<VirtualCreditCard>> SaveResult((string TransactionId, VccDetails VccDetails, VirtualCreditCard Vcc) result)
+        async Task<Result<VirtualCreditCard>> SaveResult((string, VccDetails, VirtualCreditCard) result)
         {
+            var (transactionId, vccDetails, vcc) = result;
+
             var now = DateTimeOffset.UtcNow;
 
             var vccIssue = new VccIssue
             {
-                TransactionId = result.TransactionId,
-                UniqueId = result.VccDetails.CardReference,
+                TransactionId = transactionId,
+                UniqueId = vccDetails.CardReference,
                 ReferenceCode = request.ReferenceCode,
                 Amount = request.MoneyAmount.Amount,
                 Currency = request.MoneyAmount.Currency,
                 IssuedAmount = issuedMoneyAmount.Amount,
                 IssuedCurrency = issuedMoneyAmount.Currency,
-                ActivationDate = new(int.Parse(result.VccDetails.StartDateYear), int.Parse(result.VccDetails.StartDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
-                DueDate = result.Vcc.Expiry,
+                ActivationDate = new(int.Parse(vccDetails.StartDateYear), int.Parse(vccDetails.StartDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
+                DueDate = vcc.Expiry,
                 ClientId = clientId,
-                CardNumber = result.VccDetails.CardNumber,
+                CardNumber = vccDetails.CardNumber,
                 Created = now,
                 Modified = now,
                 Status = VccStatuses.Issued,
@@ -152,7 +160,7 @@ public class IxarisService : IVccSupplierService
 
             await _vccRecordsManager.Add(vccIssue);
 
-            return result.Vcc;
+            return vcc;
         }
     }
 
@@ -161,9 +169,14 @@ public class IxarisService : IVccSupplierService
     {
         return await Login()
             .Bind(() => _scheduleLoadRecordsManager.Get(Vcc.UniqueId))
-            .Bind((ixrisScheduleLoad) => _client.CancelScheduleLoad(_securityToken, ixrisScheduleLoad.ScheduleReference))
+            .Bind(CancelScheduleLoad)
             .Bind(RemoveCard)
             .Map(Save);
+
+
+        Task<Result> CancelScheduleLoad(IxarisScheduleLoad ixarisScheduleLoad)
+            => _client.CancelScheduleLoad(_securityToken, ixarisScheduleLoad.ScheduleReference)
+                .Tap(() => _scheduleLoadRecordsManager.SetCancelled(ixarisScheduleLoad));
 
 
         async Task<Result<VccIssue>> RemoveCard()
@@ -198,10 +211,10 @@ public class IxarisService : IVccSupplierService
         {
             var updateScheduleLoadRequest = new UpdateScheduleLoadRequest()
             {
-                FundingAccountReference = _options.Account,
+                FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
                 Amount = issuedMoneyAmount.Amount,
-                ScheduleDate = Vcc.ActivationDate.ToString("yyyyy-MM-dd"),
-                ClearanceDate = Vcc.DueDate.ToString("yyyyy-MM-dd")
+                ScheduleDate = ixarisScheduleLoad.ScheduleDate.ToUniversalTime().ToString("yyyy-MM-dd"),
+                ClearanceDate = ixarisScheduleLoad.ClearanceDate.ToUniversalTime().ToString("yyyy-MM-dd")
             };
 
             var (isSuccess, _, _, error) = await _client.UpdateScheduleLoad(_securityToken, ixarisScheduleLoad.ScheduleReference, updateScheduleLoadRequest);
@@ -213,7 +226,7 @@ public class IxarisService : IVccSupplierService
             }
 
             _logger.LogVccModifyAmountRequestFailure(Vcc.ReferenceCode, error);
-            return Result.Failure<VccIssue>($"Modifying VCC for `{Vcc.ReferenceCode}` failed");
+            return Result.Failure<VccIssue>($"Modifying VCC for `{Vcc.ReferenceCode}` failed. Details: {error}");
         }
 
 

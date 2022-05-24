@@ -2,7 +2,7 @@
 
 namespace HappyTravel.Gifu.Api.Models.Ixaris.Response;
 
-public readonly struct IxarisData
+public class IxarisData
 {
     [JsonPropertyName("transactionReference")]
     public string TransactionReference { get; init; }

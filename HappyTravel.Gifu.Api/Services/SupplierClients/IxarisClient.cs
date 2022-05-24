@@ -5,30 +5,29 @@ using HappyTravel.Gifu.Api.Models.Ixaris.Request;
 using HappyTravel.Gifu.Api.Models.Ixaris.Response;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace HappyTravel.Gifu.Api.Services.SupplierClients;
 
 public class IxarisClient : IIxarisClient
 {
-    public IxarisClient(HttpClient httpClient, IOptions<IxarisOptions> options, ILogger<IxarisClient> logger)
+    public IxarisClient(IHttpClientFactory httpClientFactory, IOptions<IxarisOptions> options, ILogger<IxarisClient> logger)
     {
-        _httpClient = httpClient;
+        _httpClientFactory = httpClientFactory;
         _options = options.Value;
         _logger = logger;
     }
 
     public async Task<Result> CancelScheduleLoad(string securityToken, string scheduleReference)
     {
-        var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/schedule/{scheduleReference}/cancel";
+        var endpoint = $"ixsol-paymentpartner/schedule/{scheduleReference}/cancel";
 
-        var (isSuccess, _, _, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Absolute), securityToken);
+        var (isSuccess, _, _, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Relative), securityToken);
 
         return isSuccess
             ? Result.Success()
@@ -38,35 +37,41 @@ public class IxarisClient : IIxarisClient
 
     public Task<Result<VccDetails>> GetVirtualCardDetails(string securityToken, string cardReference)
     {
-        var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/virtualcards/card/{cardReference}";
+        var endpoint = $"ixsol-paymentpartner/virtualcards/card/{cardReference}?getCvv=true";
 
-        var requestParams = new Dictionary<string, string>() { { "getCvv", "true" } };
-
-        return Get<VccDetails>(new Uri(endpoint, UriKind.Absolute), requestParams, securityToken);
+        return Get<VccDetails>(new Uri(endpoint, UriKind.Relative), securityToken);
     }
 
 
     public Task<Result<IssueVcc>> IssueVirtualCard(string securityToken, string virtualCardFactoryName, IssueVccRequest issueVccRequest)
     {
-        var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/virtualcards/{virtualCardFactoryName}";
+        var endpoint = $"ixsol-paymentpartner/virtualcards/{virtualCardFactoryName}";
 
-        return Post<IssueVccRequest, IssueVcc>(new Uri(endpoint, UriKind.Absolute), issueVccRequest, securityToken);
+        var requestContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>()
+        {
+            new("currency", issueVccRequest.Currency.ToString()),
+            new("fundingAccountReference", issueVccRequest.FundingAccountReference)
+        });
+
+        return Post<IssueVcc>(new Uri(endpoint, UriKind.Relative), requestContent, securityToken);
     }
 
 
     public async Task<Result<string>> Login()
     {
-        var endpoint = $"{_options.Endpoint}/commons/auth/login";
+        var endpoint = $"commons/auth/login";
 
-        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(endpoint, UriKind.Absolute))
+        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(endpoint, UriKind.Relative))
         {
-            Content = new FormUrlEncodedContent(new List<KeyValuePair<string?, string?>>() { // Because in the example Content-Type: application/x-www-form-urlencoded. Need to check.
+            Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>()  // Because in the example Content-Type: application/x-www-form-urlencoded.
+            {
                 new("apiKey", _options.ApiKey),
                 new("password", _options.Password)
             })
         };
 
         var (isSuccess, _, data, error) = await SendRequest<LoginData>(request);
+
         return isSuccess
             ? data.SecurityToken
             : error;
@@ -75,9 +80,10 @@ public class IxarisClient : IIxarisClient
 
     public async Task<Result<string>> RemoveVirtualCard(string securityToken, string cardReference)
     {
-        var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/virtualcards/{cardReference}/delete";
+        var endpoint = $"ixsol-paymentpartner/virtualcards/{cardReference}/delete";
 
-        var (isSuccess, _, data, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Absolute), securityToken);
+        var (isSuccess, _, data, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Relative), securityToken);
+
         return isSuccess
             ? data.TransactionReference
             : error;
@@ -86,9 +92,19 @@ public class IxarisClient : IIxarisClient
 
     public async Task<Result<string>> ScheduleLoad(string securityToken, ScheduleLoadRequest scheduleLoadRequest)
     {
-        var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/schedule/load";
+        var endpoint = $"ixsol-paymentpartner/schedule/load";
 
-        var (isSuccess, _, data, error) = await Post<ScheduleLoadRequest, IxarisData>(new Uri(endpoint, UriKind.Absolute), scheduleLoadRequest, securityToken);
+        var requestContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>()
+        {
+            new("cardReference", scheduleLoadRequest.CardReference),
+            new("fundingAccountReference", scheduleLoadRequest.FundingAccountReference),
+            new("amount", scheduleLoadRequest.Amount.ToString()),
+            new("scheduleDate", scheduleLoadRequest.ScheduleDate),
+            new("clearanceDate", scheduleLoadRequest.ClearanceDate),
+        });
+
+        var (isSuccess, _, data, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Relative), requestContent, securityToken);
+
         return isSuccess
             ? data.ScheduleReference
             : error;
@@ -97,24 +113,28 @@ public class IxarisClient : IIxarisClient
 
     public async Task<Result<string>> UpdateScheduleLoad(string securityToken, string scheduleReference, UpdateScheduleLoadRequest updateScheduleLoadRequest)
     {
-        var endpoint = $"{_options.Endpoint}/ixsol-paymentpartner/schedule/{scheduleReference}/update";
+        var endpoint = $"ixsol-paymentpartner/schedule/{scheduleReference}/update";
 
-        var (isSuccess, _, data, error) = await Post<UpdateScheduleLoadRequest, IxarisData>(new Uri(endpoint, UriKind.Absolute), updateScheduleLoadRequest, securityToken);
+        var requestContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>()
+        {
+            new("fundingAccountReference", updateScheduleLoadRequest.FundingAccountReference),
+            new("amount", updateScheduleLoadRequest.Amount.ToString()),
+            new("scheduleDate", updateScheduleLoadRequest.ScheduleDate),
+            new("clearanceDate", updateScheduleLoadRequest.ClearanceDate),
+        });
+
+        var (isSuccess, _, data, error) = await Post<IxarisData>(new Uri(endpoint, UriKind.Relative), requestContent, securityToken);
+
         return isSuccess
             ? data.ScheduleReference
-            : error;
+            : Result.Failure<string>(error);
     }
 
 
-    private Task<Result<TResponse>> Get<TResponse>(Uri uri, Dictionary<string, string> requestParams, string securityToken)
+    private Task<Result<TResponse>> Get<TResponse>(Uri uri, string securityToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, uri);
         request.Headers.Add("authorization", securityToken);
-
-        foreach(var param in requestParams)
-        {
-            request.Options.Set(new(param.Key), param.Value);
-        }
 
         return SendRequest<TResponse>(request);
     }
@@ -124,17 +144,17 @@ public class IxarisClient : IIxarisClient
     {
         var request = new HttpRequestMessage(HttpMethod.Post, uri);
 
-        request.Headers.Add("authorization", securityToken);
+        request.Headers.Add("Authorization", securityToken);
 
         return SendRequest<TResponse>(request);
     }
 
 
-    private Task<Result<TResponse>> Post<TRequest, TResponse>(Uri uri, TRequest requestContext, string securityToken)
+    private Task<Result<TResponse>> Post<TResponse>(Uri uri, HttpContent content, string securityToken)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, uri)
         {
-            Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(requestContext), Encoding.UTF8, "application/json"),
+            Content = content
         };
         request.Headers.Add("authorization", securityToken);
 
@@ -144,25 +164,41 @@ public class IxarisClient : IIxarisClient
 
     private async Task<Result<TResponse>> SendRequest<TResponse>(HttpRequestMessage request)
     {
-        var response = await _httpClient.SendAsync(request);
+        var client = _httpClientFactory.CreateClient(HttpClientNames.IxarisClient);
+        using var response = await client.SendAsync(request);
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = JsonSerializer.Deserialize<BaseIxarisResponse<TResponse>>(responseContent);
+
+            return result.Response is not null
+                ? result.Response.Body
+                : default;
+        }
+
         try
         {
-            var result = await response.Content.ReadFromJsonAsync<BaseIxarisResponse<TResponse>>();
+            var result = JsonSerializer.Deserialize<BaseIxarisResponse<TResponse>>(responseContent);
 
-            return result.Envelope.StatusCode == "SUCCESS"
-                ? result.Response.Body
-                : Result.Failure<TResponse>(JsonConvert.SerializeObject(result.Response.Details.ToString())); // Details??? The type is unknown.
+            var errorDetails = result?.Response?.Details?.Select(d => $"{d.Key}: {d.Value}").ToList()
+                ?? new()
+                {
+                    result.Envelope.StatusCode
+                };
+
+            return Result.Failure<TResponse>(string.Join("; ", errorDetails));
         }
-        catch (JsonReaderException ex)
+        catch (JsonException ex)
         {
-            var responseBody = await response.Content.ReadAsStringAsync();
-            _logger.LogResponseDeserializationFailed(ex, responseBody);
+            _logger.LogResponseDeserializationFailed(ex, responseContent);
             return Result.Failure<TResponse>("Response deserialization failed");
         }
     }
-        
+    
 
-    private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly IxarisOptions _options;
     private readonly ILogger<IxarisClient> _logger;
 }

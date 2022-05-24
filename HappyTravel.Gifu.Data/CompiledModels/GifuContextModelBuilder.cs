@@ -24,7 +24,7 @@ namespace HappyTravel.Gifu.Data.CompiledModels
             VccIssueEntityType.CreateAnnotations(vccIssue);
 
             AddAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
-            AddAnnotation("ProductVersion", "6.0.4");
+            AddAnnotation("ProductVersion", "6.0.5");
             AddAnnotation("Relational:MaxIdentifierLength", 63);
         }
     }

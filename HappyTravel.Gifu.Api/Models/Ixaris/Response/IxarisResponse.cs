@@ -1,11 +1,12 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace HappyTravel.Gifu.Api.Models.Ixaris.Response;
 
-public readonly struct IxarisResponse<T>
+public class IxarisResponse<T>
 {
     [JsonPropertyName("details")]
-    public object Details { get; init; } // The type is unknown.
+    public Dictionary<string, string> Details { get; init; }
 
     [JsonPropertyName("body")]
     public T Body { get; init; }
