@@ -179,7 +179,7 @@ public static class ServiceCollectionExtensions
     {
         var authorityOptions = vaultClient.Get(configuration["AuthorityOptions"]).GetAwaiter().GetResult();
 
-        var clientOptions = vaultClient.Get(configuration["Edo:IdentityClient:Options"]).GetAwaiter().GetResult();
+        var clientOptions = vaultClient.Get(configuration["IdentityClient:Options"]).GetAwaiter().GetResult();
         var identityUri = new Uri(new Uri(authorityOptions["authorityUrl"]), "/connect/token").ToString();
         var clientId = clientOptions["clientId"];
         var clientSecret = clientOptions["clientSecret"];
