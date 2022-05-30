@@ -65,7 +65,7 @@ public static class ConfigureServicesExtension
             .ConfigureApiVersioning()
             .ConfigureSwagger()
             .ConfigureDatabaseOptions(vaultClient, builder.Configuration)
-            .ConfigureAuthentication(vaultClient, builder.Configuration)
+            .ConfigureAuthentication(builder.Configuration)
             .ConfigureVccServices(vaultClient, builder.Configuration)
             .ConfigureCurrencyConverterService(vaultClient, builder.Configuration)
             .AddTransient<VccServiceResolver>()
