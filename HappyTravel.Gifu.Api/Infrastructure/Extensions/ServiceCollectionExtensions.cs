@@ -186,10 +186,9 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection ConfigureCurrencyConverterService(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
     {
-        var authorityOptions = vaultClient.Get(configuration["AuthorityOptions"]).GetAwaiter().GetResult();
-
+        var authorityOptions = configuration.GetSection("Authority").Get<AuthorityOptions>();
         var clientOptions = vaultClient.Get(configuration["IdentityClient:Options"]).GetAwaiter().GetResult();
-        var identityUri = new Uri(new Uri(authorityOptions["authorityUrl"]), "/connect/token").ToString();
+        var identityUri = new Uri(new Uri(authorityOptions.AuthorityUrl), "/connect/token").ToString();
         var clientId = clientOptions["clientId"];
         var clientSecret = clientOptions["clientSecret"];
 
@@ -244,7 +243,7 @@ public static class ServiceCollectionExtensions
     }
         
         
-    public static IServiceCollection ConfigureAuthentication(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
+    public static IServiceCollection ConfigureAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var authorityOptions = configuration.GetSection("Authority").Get<AuthorityOptions>();
 
