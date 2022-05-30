@@ -246,14 +246,15 @@ public static class ServiceCollectionExtensions
         
     public static IServiceCollection ConfigureAuthentication(this IServiceCollection services, IVaultClient vaultClient, IConfiguration configuration)
     {
-        var authorityOptions = vaultClient.Get(configuration["AuthorityOptions"]).GetAwaiter().GetResult();
+        var authorityOptions = configuration.GetSection("Authority").Get<AuthorityOptions>();
 
         services.AddAuthentication(IdentityServerAuthenticationDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = authorityOptions["authorityUrl"];
-                options.Audience = authorityOptions["apiName"];
+                options.Authority = authorityOptions.AuthorityUrl;
+                options.Audience = authorityOptions.Audience;
                 options.RequireHttpsMetadata = true;
+                options.AutomaticRefreshInterval = authorityOptions.AutomaticRefreshInterval;
             });
 
         return services;
