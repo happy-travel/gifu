@@ -15,7 +15,7 @@
     <PackageReference Include="Amex.Api.Client.Core" Version="0.1.2" />
     <PackageReference Include="CSharpFunctionalExtensions" Version="2.29.1" />
     <PackageReference Include="FloxDc.CacheFlow" Version="1.10.0" />
-    <PackageReference Include="FluentValidation" Version="11.0.1" />
+    <PackageReference Include="FluentValidation" Version="11.0.2" />
     <PackageReference Include="HappyTravel.ConsulKeyValueClient.ConfigurationProvider" Version="1.6.3" />
     <PackageReference Include="HappyTravel.ErrorHandling" Version="1.2.3" />
     <PackageReference Include="HappyTravel.HttpRequestLogger" Version="1.0.5" />
