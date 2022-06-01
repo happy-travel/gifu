@@ -62,7 +62,7 @@ public class VccServiceResolver
                 return GetService(typeof(IxarisService));
             default:
                 _logger.LogVccServiceResolveFailure();
-                return Result.Failure<IVccSupplierService>($"Unable to resolve a vccService for VccVendor `{vccVendor}`"); _logger.LogVccServiceResolveFailure();
+                return Result.Failure<IVccSupplierService>($"Unable to resolve a vccService for VccVendor `{vccVendor}`");
         }
     }
 
