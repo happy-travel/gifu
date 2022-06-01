@@ -47,6 +47,12 @@ public static partial class LoggerExtensions
     [LoggerMessage(81052, LogLevel.Information, "Editing VCC for '{ReferenceCode}' completed successfully")]
     static partial void VccEditSuccess(ILogger logger, string ReferenceCode);
     
+    [LoggerMessage(81060, LogLevel.Information, "VccService succesfully resolved. Selected service: `{vccServiveName}`")]
+    static partial void VccServiceResolveSuccess(ILogger logger, string vccServiveName);
+    
+    [LoggerMessage(81061, LogLevel.Error, "VccService resolving failed")]
+    static partial void VccServiceResolveFailure(ILogger logger);
+    
     
     
     public static void LogClientIdRetrievalFailure(this ILogger logger)
@@ -90,4 +96,10 @@ public static partial class LoggerExtensions
     
     public static void LogVccEditSuccess(this ILogger logger, string ReferenceCode)
         => VccEditSuccess(logger, ReferenceCode);
+    
+    public static void LogVccServiceResolveSuccess(this ILogger logger, string vccServiveName)
+        => VccServiceResolveSuccess(logger, vccServiveName);
+    
+    public static void LogVccServiceResolveFailure(this ILogger logger)
+        => VccServiceResolveFailure(logger);
 }

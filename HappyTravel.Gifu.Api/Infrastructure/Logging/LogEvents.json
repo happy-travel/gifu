@@ -12,5 +12,7 @@
     {"id": 81040, "name": "ResponseDeserializationFailed", "level": "Error", "template": "Response deserialization failed: {Response}", "argumentTypes":  ["string"], "hasException":  true},
     {"id": 81050, "name": "VccEditRequestStarted", "level": "Information", "template": "Editing VCC amount for '{ReferenceCode}' started", "argumentTypes": ["string"]},
     {"id": 81051, "name": "VccEditFailure", "level": "Error", "template": "Editing VCC for '{ReferenceCode}' failed. '{Error}'", "argumentTypes": ["string", "string"]},
-    {"id": 81052, "name": "VccEditSuccess", "level": "Information", "template": "Editing VCC for '{ReferenceCode}' completed successfully", "argumentTypes": ["string"]}
+    {"id": 81052, "name": "VccEditSuccess", "level": "Information", "template": "Editing VCC for '{ReferenceCode}' completed successfully", "argumentTypes": ["string"]},
+    {"id": 81060, "name": "VccServiceResolveSuccess", "level": "Information", "template": "VccService succesfully resolved. Selected service: `{vccServiveName}`", "argumentTypes": ["string"]},
+    {"id": 81061, "name": "VccServiceResolveFailure", "level": "Error", "template": "VccService resolving failed"}
 ]
