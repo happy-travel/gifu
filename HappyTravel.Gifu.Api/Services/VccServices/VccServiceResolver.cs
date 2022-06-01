@@ -1,8 +1,10 @@
 ﻿using CSharpFunctionalExtensions;
+using HappyTravel.Gifu.Api.Infrastructure.Logging;
 using HappyTravel.Gifu.Api.Infrastructure.Options;
 using HappyTravel.Gifu.Api.Models;
 using HappyTravel.Gifu.Data;
 using HappyTravel.Money.Enums;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -12,8 +14,10 @@ namespace HappyTravel.Gifu.Api.Services.VccServices;
 
 public class VccServiceResolver
 {
-    public VccServiceResolver(IOptions<VccServiceResolverOptions> options, IEnumerable<IVccSupplierService> vccServices)
+    public VccServiceResolver(ILogger<VccServiceResolver> logger, IOptions<VccServiceResolverOptions> options, 
+        IEnumerable<IVccSupplierService> vccServices)
     {
+        _logger = logger;
         _options = options.Value;
         _vccServices = vccServices;
     }
@@ -30,7 +34,8 @@ public class VccServiceResolver
         if (_options.IxarisCurrencies.Contains(currency) && _options.IxarisCreditCardTypes.Any(type => types.Contains(type)))
             return GetService(typeof(IxarisService));
 
-        return Result.Failure<IVccSupplierService>($"Unable to issue a VCC for currency `{currency}` and VccVendors `{string.Join(", ", types)}`");
+        _logger.LogVccServiceResolveFailure();
+        return Result.Failure<IVccSupplierService>($"Unable to resolve a vccService for currency `{currency}` and VccVendors `{string.Join(", ", types)}`");
     }
 
 
@@ -42,23 +47,34 @@ public class VccServiceResolver
         if (_options.IxarisCurrencies.Contains(currency))
             return GetService(typeof(IxarisService));
 
-        return Result.Failure<IVccSupplierService>($"Unable to issue a VCC for currency `{currency}`");
+        _logger.LogVccServiceResolveFailure();
+        return Result.Failure<IVccSupplierService>($"Unable to resolve a vccService for currency `{currency}`");
     }
 
 
     public Result<IVccSupplierService> ResolveServiceByVccVendor(VccVendors vccVendor)
-        => vccVendor switch
+    {
+        switch (vccVendor)
         {
-            VccVendors.AmericanExpress => GetService(typeof(AmExService)),
-            VccVendors.Ixaris => GetService(typeof(IxarisService)),
-            _ => Result.Failure<IVccSupplierService>($"Unable to issue a VCC for VccVendor `{vccVendor}`")
-        };
+            case VccVendors.AmericanExpress:
+                return GetService(typeof(AmExService));
+            case VccVendors.Ixaris:
+                return GetService(typeof(IxarisService));
+            default:
+                _logger.LogVccServiceResolveFailure();
+                return Result.Failure<IVccSupplierService>($"Unable to resolve a vccService for VccVendor `{vccVendor}`"); _logger.LogVccServiceResolveFailure();
+        }
+    }
 
 
     private Result<IVccSupplierService> GetService(Type type)
-        => Result.Success(_vccServices.Single(s => s.GetType() == type));
-        
+    {
+        _logger.LogVccServiceResolveSuccess(type.Name);
+        return Result.Success(_vccServices.Single(s => s.GetType() == type));
+    }
 
+
+    private readonly ILogger<VccServiceResolver> _logger;
     private readonly VccServiceResolverOptions _options;
     private readonly IEnumerable<IVccSupplierService> _vccServices;
 }
