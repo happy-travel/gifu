@@ -1,9 +1,14 @@
-replicaCount: 1
+replicaCount: 2
+
+podAnnotations:
+  linkerd.io/inject: enabled
+
+deployment:
+  annotations:
+    sidecar.jaegertracing.io/inject: jaeger-production
 
 jaeger:
-  sidecar: jaeger-production
   collector_host: dns:///jaeger-production-collector-headless.observability:14250
-
 
 image:
   repository: registry.happytravel.com/gifu
@@ -15,12 +20,8 @@ nameOverride: ""
 fullnameOverride: ""
 
 serviceAccount:
-  # Specifies whether a service account should be created
-  create: false
-  # Annotations to add to the service account
+  create: false 
   annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
   name:
 
 podSecurityContext: {}
@@ -45,10 +46,12 @@ ingress:
     ingress.kubernetes.io/force-ssl-redirect: "true"
     kubernetes.io/ingress.allow-http: "false"
     kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/service-upstream: "true"
   hosts:
     - host: gf.happytravel.com
       paths:
-        - /
+        - path: /
+          pathType: ImplementationSpecific
   tls:
    - secretName: happytravel-tls
      hosts:
@@ -66,7 +69,28 @@ nodeSelector: {}
 
 tolerations: []
 
-affinity: {}
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - gifu
+      topologyKey: "kubernetes.io/hostname"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+metrics:
+  enabled: false
+  podMonitor:
+    enabled: false
 
 env:
   ASPNETCORE_URLS: http://*:80

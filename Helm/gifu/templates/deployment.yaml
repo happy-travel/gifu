@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
   annotations:
-    sidecar.jaegertracing.io/inject: {{ .Values.jaeger.sidecar }}
+    {{- toYaml .Values.deployment.annotations | nindent 4 }}
   labels:
     {{- include "gifu.labels" . | nindent 4 }}
 spec:
@@ -15,6 +15,12 @@ spec:
     metadata:
       labels:
         {{- include "gifu.selectorLabels" . | nindent 8 }}
+    {{- if .Values.podAnnotations }}
+      annotations:
+      {{- range $key, $value := .Values.podAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+    {{- end }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -32,7 +38,7 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: metadata.name
-          image: jaegertracing/jaeger-agent:1.19.0
+          image: jaegertracing/jaeger-agent:1.23.0
           imagePullPolicy: IfNotPresent
           name: jaeger-agent
           resources: {}
@@ -47,6 +53,14 @@ spec:
             - name: http
               containerPort: 80
               protocol: TCP
+            - name: grpc
+              containerPort: {{ .Values.service.grpc.port }}
+              protocol: TCP
+            - name: http-metrics
+              containerPort: {{ .Values.service.metrics.port }}
+              protocol: TCP
+            - name: http-healthc
+              containerPort: {{ .Values.service.healthchecks.port }}
           startupProbe:
             httpGet:
               path: /health
