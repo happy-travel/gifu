@@ -74,7 +74,7 @@ public class IxarisClient : IIxarisClient
 
         return isSuccess
             ? data.SecurityToken
-            : error;
+            : Result.Failure<string>(error);
     }
 
 
@@ -86,7 +86,7 @@ public class IxarisClient : IIxarisClient
 
         return isSuccess
             ? data.TransactionReference
-            : error;
+            : Result.Failure<string>(error);
     }
 
 
@@ -107,7 +107,7 @@ public class IxarisClient : IIxarisClient
 
         return isSuccess
             ? data.ScheduleReference
-            : error;
+            : Result.Failure<string>(error);
     }
 
 

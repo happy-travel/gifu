@@ -129,6 +129,7 @@ public class IxarisService : IVccSupplierService
                 return (transactionId, vccDetails, vcc);
             }
 
+            _logger.LogIxarisCheduleLoadFailure(request.ReferenceCode, vccDetails.CardReference, error);
             return Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
         }
 
