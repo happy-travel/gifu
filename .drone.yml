@@ -99,7 +99,7 @@ steps:
   settings:
     mode: upgrade
     chart: ./Helm/gifu
-    release: gifu-dev
+    release: gifu
     values_files: ["Helm/gifu/values_dev.yaml"]
     namespace: dev
     skip_tls_verify: true
