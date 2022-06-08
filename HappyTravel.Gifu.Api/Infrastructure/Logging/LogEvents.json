@@ -14,5 +14,6 @@
     {"id": 81051, "name": "VccEditFailure", "level": "Error", "template": "Editing VCC for '{ReferenceCode}' failed. '{Error}'", "argumentTypes": ["string", "string"]},
     {"id": 81052, "name": "VccEditSuccess", "level": "Information", "template": "Editing VCC for '{ReferenceCode}' completed successfully", "argumentTypes": ["string"]},
     {"id": 81060, "name": "VccServiceResolveSuccess", "level": "Information", "template": "VccService succesfully resolved. Selected service: `{vccServiveName}`", "argumentTypes": ["string"]},
-    {"id": 81061, "name": "VccServiceResolveFailure", "level": "Error", "template": "VccService resolving failed"}
+    {"id": 81061, "name": "VccServiceResolveFailure", "level": "Error", "template": "VccService resolving failed"},
+    {"id": 81070, "name": "IxarisCheduleLoadFailure", "level": "Error", "template": "The schedule load for ReferenceCode: '{ReferenceCode}' and UniqueId: '{UniqueId}' failed: '{Error}'", "argumentTypes": ["string", "string", "string"]}
 ]

@@ -53,6 +53,9 @@ public static partial class LoggerExtensions
     [LoggerMessage(81061, LogLevel.Error, "VccService resolving failed")]
     static partial void VccServiceResolveFailure(ILogger logger);
     
+    [LoggerMessage(81070, LogLevel.Error, "The schedule load for ReferenceCode: '{ReferenceCode}' and UniqueId: '{UniqueId}' failed: '{Error}'")]
+    static partial void IxarisCheduleLoadFailure(ILogger logger, string ReferenceCode, string UniqueId, string Error);
+    
     
     
     public static void LogClientIdRetrievalFailure(this ILogger logger)
@@ -102,4 +105,7 @@ public static partial class LoggerExtensions
     
     public static void LogVccServiceResolveFailure(this ILogger logger)
         => VccServiceResolveFailure(logger);
+    
+    public static void LogIxarisCheduleLoadFailure(this ILogger logger, string ReferenceCode, string UniqueId, string Error)
+        => IxarisCheduleLoadFailure(logger, ReferenceCode, UniqueId, Error);
 }
