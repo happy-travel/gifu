@@ -38,6 +38,12 @@ securityContext: {}
 service:
   type: ClusterIP
   port: 80
+  grpc:
+    port: 5101
+  metrics:
+    port: 60001
+  healthchecks:
+    port: 60000
 
 ingress:
   enabled: true
