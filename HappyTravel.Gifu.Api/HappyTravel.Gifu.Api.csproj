@@ -13,7 +13,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Amex.Api.Client.Core" Version="0.1.2" />
-    <PackageReference Include="CSharpFunctionalExtensions" Version="2.29.3" />
+    <PackageReference Include="CSharpFunctionalExtensions" Version="2.29.4" />
     <PackageReference Include="FloxDc.CacheFlow" Version="1.10.0" />
     <PackageReference Include="FluentValidation" Version="11.0.3" />
     <PackageReference Include="HappyTravel.ConsulKeyValueClient.ConfigurationProvider" Version="1.6.3" />
