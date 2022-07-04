@@ -52,6 +52,7 @@ public static class ConfigureServicesExtension
             })
             .AddApiExplorer();
 
+        builder.Service.AddResponseCompression();
         builder.Services.AddHealthChecks()
             .AddDbContextCheck<GifuContext>();
 
