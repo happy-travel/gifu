@@ -22,7 +22,8 @@ namespace HappyTravel.Gifu.Api.Services.VccServices;
 public class IxarisService : IVccSupplierService
 {   
     public IxarisService(IIxarisClient client, ILogger<IxarisService> logger, IVccIssueRecordsManager vccRecordsManager, 
-        IOptions<IxarisOptions> options, IVccFactoryService vccFactoryNameService, IScheduleLoadRecordsManager scheduleLoadRecordsManager)
+        IOptions<IxarisOptions> options, IVccFactoryService vccFactoryNameService, IScheduleLoadRecordsManager scheduleLoadRecordsManager,
+        IIxarisCardInfoMapper ixarisCardInfoMapper)
     {            
         _client = client;
         _logger = logger;
@@ -30,6 +31,7 @@ public class IxarisService : IVccSupplierService
         _options = options.Value;
         _vccFactoryNameService = vccFactoryNameService;
         _scheduleLoadRecordsManager = scheduleLoadRecordsManager;
+        _ixarisCardInfoMapper = ixarisCardInfoMapper;
     }
 
 
@@ -61,7 +63,8 @@ public class IxarisService : IVccSupplierService
             {
                 Currency = issuedMoneyAmount.Currency,
                 FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
-                Amount = issuedMoneyAmount.Amount
+                Amount = issuedMoneyAmount.Amount,
+                CardInfo = _ixarisCardInfoMapper.Map(request.ReferenceCode, request.SpecialValues)
             };
 
             var (isSuccess, _, data, error) = await _client.IssueVirtualCard(_securityToken, vccFactory.Value, issueVccRequest);
@@ -263,4 +266,5 @@ public class IxarisService : IVccSupplierService
     private readonly IxarisOptions _options;
     private readonly IVccFactoryService _vccFactoryNameService;
     private readonly IScheduleLoadRecordsManager _scheduleLoadRecordsManager;
+    private readonly IIxarisCardInfoMapper _ixarisCardInfoMapper;
 }

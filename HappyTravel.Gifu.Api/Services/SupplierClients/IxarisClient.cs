@@ -50,7 +50,8 @@ public class IxarisClient : IIxarisClient
         var requestContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>()
         {
             new("currency", issueVccRequest.Currency.ToString()),
-            new("fundingAccountReference", issueVccRequest.FundingAccountReference)
+            new("fundingAccountReference", issueVccRequest.FundingAccountReference),
+            new("cardInfo", JsonSerializer.Serialize(issueVccRequest.CardInfo))
         });
 
         return Post<IssueVcc>(new Uri(endpoint, UriKind.Relative), requestContent, securityToken);
