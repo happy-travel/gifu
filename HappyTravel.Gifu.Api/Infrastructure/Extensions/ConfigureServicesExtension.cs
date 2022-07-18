@@ -57,6 +57,7 @@ public static class ConfigureServicesExtension
             .AddDbContextCheck<GifuContext>();
 
         builder.Services.Configure<UserDefinedFieldsOptions>(builder.Configuration.GetSection("UserDefinedFieldsOptions"));
+        builder.Services.Configure<IxarisUserDefinedFieldsOptions>(builder.Configuration.GetSection("IxarisUserDefinedFieldsOptions"));
         builder.Services.Configure<DirectEditOptions>(builder.Configuration.GetSection("DirectEditOptions"));
         builder.Services.Configure<FakeAmexCardOptions>(builder.Configuration.GetSection("FakeAmexCardOptions"));
 
@@ -73,6 +74,7 @@ public static class ConfigureServicesExtension
             .AddTransient<IVccService, VccService>()
             .AddTransient<IClientService, ClientService>()
             .AddTransient<ICustomFieldsMapper, CustomFieldsMapper>()
+            .AddTransient<IIxarisCardInfoMapper, IxarisCardInfoMapper>()
             .AddTransient<IVccIssueRecordsManager, VccIssueRecordsManager>()
             .AddTransient<IAccountsService, AccountService>()
             .AddTransient<IVccFactoryService, VccFactoryService>()
