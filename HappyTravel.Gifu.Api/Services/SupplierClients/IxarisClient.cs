@@ -47,12 +47,17 @@ public class IxarisClient : IIxarisClient
     {
         var endpoint = $"ixsol-paymentpartner/virtualcards/{virtualCardFactoryName}";
 
-        var requestContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>()
+        var request = new List<KeyValuePair<string, string>>()
         {
             new("currency", issueVccRequest.Currency.ToString()),
             new("fundingAccountReference", issueVccRequest.FundingAccountReference),
             new("cardInfo", JsonSerializer.Serialize(issueVccRequest.CardInfo))
-        });
+        };
+
+        if (issueVccRequest.Amount is not null)
+            request.Add(new("amount", issueVccRequest.Amount.Value.ToString()));
+
+        var requestContent = new FormUrlEncodedContent(request);
 
         return Post<IssueVcc>(new Uri(endpoint, UriKind.Relative), requestContent, securityToken);
     }

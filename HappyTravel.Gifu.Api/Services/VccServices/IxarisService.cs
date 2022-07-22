@@ -40,9 +40,7 @@ public class IxarisService : IVccSupplierService
         return await ValidateRequest()
             .Bind(() => Login())
             .Bind(() => _vccFactoryNameService.GetVccFactory(request.Types))
-            .Bind(CreateCard)
-            .Bind(GetCardDetails)
-            .Bind(ScheduleLoadCard)
+            .Bind(Issue)
             .Bind(SaveResult);
 
 
@@ -57,84 +55,99 @@ public class IxarisService : IVccSupplierService
         }
 
 
-        async Task<Result<(IssueVcc, CreditCardTypes)>> CreateCard(KeyValuePair<CreditCardTypes, string> vccFactory)
+        async Task<Result<(string, VccDetails, VirtualCreditCard)>> Issue(KeyValuePair<CreditCardTypes, string> vccFactory)
         {
-            var issueVccRequest = new IssueVccRequest()
+            // ScheduleDate property in ScheduleLoadRequest must specify a date in GMT format which identifies a day in the future.
+            bool scheduleLoadEnabled = request.ActivationDate.ToUniversalTime().Date > DateTimeOffset.UtcNow.Date
+                ? true
+                : false;
+
+            return await CreateCard()
+                .Bind(GetCardDetails)
+                .BindIf(scheduleLoadEnabled, ScheduleLoadCard);
+
+
+            async Task<Result<(IssueVcc, CreditCardTypes)>> CreateCard()
             {
-                Currency = issuedMoneyAmount.Currency,
-                FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
-                Amount = issuedMoneyAmount.Amount,
-                CardInfo = _ixarisCardInfoMapper.Map(request.ReferenceCode, request.SpecialValues)
-            };
-
-            var (isSuccess, _, data, error) = await _client.IssueVirtualCard(_securityToken, vccFactory.Value, issueVccRequest);
-
-            if (isSuccess)
-            {
-                _logger.LogVccIssueRequestSuccess(request.ReferenceCode, data.CardReference);
-                return (data, vccFactory.Key);
-            }
-
-            _logger.LogVccIssueRequestFailure(request.ReferenceCode, error);
-            return Result.Failure<(IssueVcc, CreditCardTypes)>(error);
-        }
-
-
-        async Task<Result<(string, VccDetails, VirtualCreditCard)>> GetCardDetails((IssueVcc, CreditCardTypes) result)
-        {
-            var (issueVcc, vccType) = result;
-
-            var (isSuccess, _, response, error) = await _client.GetVirtualCardDetails(_securityToken, issueVcc.CardReference);
-
-            return isSuccess
-                ? (issueVcc.TransactionReference, response,
-                    new(number: response.CardNumber,
-                        expiry: new(int.Parse(response.ExpiryDateYear), int.Parse(response.ExpiryDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
-                        holder: response.CardholderName,
-                        code: response.Cvv,
-                        type: vccType))
-                : Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
-        }
-
-
-        async Task<Result<(string, VccDetails, VirtualCreditCard)>> ScheduleLoadCard((string, VccDetails, VirtualCreditCard) result)
-        {
-            var (transactionId, vccDetails, vcc) = result;
-
-            var scheduleLoadRequest = new ScheduleLoadRequest()
-            {
-                CardReference = vccDetails.CardReference,
-                FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
-                Amount = issuedMoneyAmount.Amount,
-                ScheduleDate = request.ActivationDate.ToUniversalTime().ToString("yyyy-MM-dd"),
-                ClearanceDate = request.DueDate.ToUniversalTime().ToString("yyyy-MM-dd")
-            };
-
-            var (isSuccess, _, scheduleReference, error) = await _client.ScheduleLoad(_securityToken, scheduleLoadRequest);
-
-            if (isSuccess)
-            {
-                var now = DateTimeOffset.UtcNow;
-
-                var scheduleLoad = new IxarisScheduleLoad()
+                var issueVccRequest = new IssueVccRequest()
                 {
-                    ScheduleReference = scheduleReference,
-                    CardReference = vccDetails.CardReference,
-                    ScheduleDate = request.ActivationDate.ToUniversalTime(),
-                    ClearanceDate = request.DueDate.ToUniversalTime(),
-                    Created = now,
-                    Modified = now,
-                    Status = IxarisScheduleLoadStatuses.Active
+                    Currency = issuedMoneyAmount.Currency,
+                    FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
+                    Amount = !scheduleLoadEnabled
+                        ? issuedMoneyAmount.Amount
+                        : default,
+                    CardInfo = _ixarisCardInfoMapper.Map(request.ReferenceCode, request.SpecialValues)
                 };
 
-                await _scheduleLoadRecordsManager.Add(scheduleLoad);
+                var (isSuccess, _, data, error) = await _client.IssueVirtualCard(_securityToken, vccFactory.Value, issueVccRequest);
 
-                return (transactionId, vccDetails, vcc);
+                if (isSuccess)
+                {
+                    _logger.LogVccIssueRequestSuccess(request.ReferenceCode, data.CardReference);
+                    return (data, vccFactory.Key);
+                }
+
+                _logger.LogVccIssueRequestFailure(request.ReferenceCode, error);
+                return Result.Failure<(IssueVcc, CreditCardTypes)>(error);
             }
 
-            _logger.LogIxarisCheduleLoadFailure(request.ReferenceCode, vccDetails.CardReference, error);
-            return Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
-        }
+
+            async Task<Result<(string, VccDetails, VirtualCreditCard)>> GetCardDetails((IssueVcc, CreditCardTypes) result)
+            {
+                var (issueVcc, vccType) = result;
+
+                var (isSuccess, _, response, error) = await _client.GetVirtualCardDetails(_securityToken, issueVcc.CardReference);
+
+                return isSuccess
+                    ? (issueVcc.TransactionReference, response,
+                        new(number: response.CardNumber,
+                            expiry: new(int.Parse(response.ExpiryDateYear), int.Parse(response.ExpiryDateMonth), 1, 0, 0, 0, TimeSpan.Zero),
+                            holder: response.CardholderName,
+                            code: response.Cvv,
+                            type: vccType))
+                    : Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
+            }
+
+
+            async Task<Result<(string, VccDetails, VirtualCreditCard)>> ScheduleLoadCard((string, VccDetails, VirtualCreditCard) result)
+            {
+                var (transactionId, vccDetails, vcc) = result;
+
+                var scheduleLoadRequest = new ScheduleLoadRequest()
+                {
+                    CardReference = vccDetails.CardReference,
+                    FundingAccountReference = _options.Accounts[issuedMoneyAmount.Currency],
+                    Amount = issuedMoneyAmount.Amount,
+                    ScheduleDate = request.ActivationDate.ToUniversalTime().ToString("yyyy-MM-dd"),
+                    ClearanceDate = request.DueDate.ToUniversalTime().ToString("yyyy-MM-dd")
+                };
+
+                var (isSuccess, _, scheduleReference, error) = await _client.ScheduleLoad(_securityToken, scheduleLoadRequest);
+
+                if (isSuccess)
+                {
+                    var now = DateTimeOffset.UtcNow;
+
+                    var scheduleLoad = new IxarisScheduleLoad()
+                    {
+                        ScheduleReference = scheduleReference,
+                        CardReference = vccDetails.CardReference,
+                        ScheduleDate = request.ActivationDate.ToUniversalTime(),
+                        ClearanceDate = request.DueDate.ToUniversalTime(),
+                        Created = now,
+                        Modified = now,
+                        Status = IxarisScheduleLoadStatuses.Active
+                    };
+
+                    await _scheduleLoadRecordsManager.Add(scheduleLoad);
+
+                    return (transactionId, vccDetails, vcc);
+                }
+
+                _logger.LogIxarisCheduleLoadFailure(request.ReferenceCode, vccDetails.CardReference, error);
+                return Result.Failure<(string, VccDetails, VirtualCreditCard)>(error);
+            }
+        }        
 
 
         async Task<Result<VirtualCreditCard>> SaveResult((string, VccDetails, VirtualCreditCard) result)
