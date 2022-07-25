@@ -185,15 +185,21 @@ public class IxarisService : IVccSupplierService
     public async Task<Result> Remove(VccIssue Vcc)
     {
         return await Login()
-            .Bind(() => _scheduleLoadRecordsManager.Get(Vcc.UniqueId))
             .Bind(CancelScheduleLoad)
             .Bind(RemoveCard)
             .Map(Save);
 
 
-        Task<Result> CancelScheduleLoad(IxarisScheduleLoad ixarisScheduleLoad)
-            => _client.CancelScheduleLoad(_securityToken, ixarisScheduleLoad.ScheduleReference)
-                .Tap(() => _scheduleLoadRecordsManager.SetCancelled(ixarisScheduleLoad));
+        async Task<Result> CancelScheduleLoad()
+        {
+            var (isSuccess, _, ixarisScheduleLoad, error) = await _scheduleLoadRecordsManager.Get(Vcc.UniqueId);
+
+            if (isSuccess)
+                return await _client.CancelScheduleLoad(_securityToken, ixarisScheduleLoad.ScheduleReference)
+                    .Tap(() => _scheduleLoadRecordsManager.SetCancelled(ixarisScheduleLoad));
+
+            return Result.Success();
+        }
 
 
         async Task<Result<VccIssue>> RemoveCard()
